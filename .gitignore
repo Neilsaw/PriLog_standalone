@@ -1,0 +1,8 @@
+/movie/
+/tmp/
+*.mp4
+.idea
+/build/
+/dist/
+/standalone/
+/_app.spec
