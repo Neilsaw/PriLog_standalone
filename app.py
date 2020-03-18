@@ -430,7 +430,8 @@ def analyze_score_frame(frame, score, roi):
 
 def analyze_damage_frame(frame, roi, damage):
     # 総ダメージを判定
-    analyze_frame = frame[roi[1]:roi[3], roi[0]:roi[2]]
+    analyze_frame = cv2.resize(frame, dsize=(FRAME_COLS, FRAME_ROWS))
+    analyze_frame = analyze_frame[roi[1]:roi[3], roi[0]:roi[2]]
 
     analyze_frame = cv2.cvtColor(analyze_frame, cv2.COLOR_BGR2HSV)
     analyze_frame = cv2.inRange(analyze_frame, np.array([10, 120, 160]), np.array([40, 255, 255]))
