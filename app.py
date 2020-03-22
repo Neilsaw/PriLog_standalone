@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
+from pytube import YouTube
+from pytube import extract
+from pytube import exceptions
 import time as tm
 import cv2
 import json
@@ -152,6 +155,16 @@ def clear_path(path):
     return
 
 
+def get_youtube_id(url):
+    # ID部分の取り出し
+    try:
+        ret = extract.video_id(url)
+    except exceptions.RegexMatchError:
+        ret = False
+
+    return ret
+
+
 def model_init(video_type):
     # 動画の種類ごとのモデル初期化処理
     global CHARACTERS_DATA          # キャラクター名テンプレート
@@ -212,16 +225,14 @@ def get_aspect_ratio(width, height):
     return x, y
 
 
-def analyze_movie(movie_path):
-    # 動画解析し結果をリストで返す
-    start_time = tm.time()
+def movie_check(movie_path):
     video = cv2.VideoCapture(movie_path)
 
-    frame_count = int(video.get(7))  # フレーム数を取得
-    frame_rate = int(video.get(5))  # フレームレート(1フレームの時間単位はミリ秒)の取得
+    frame_count = int(video.get(7))
+    frame_rate = int(video.get(5))
 
-    frame_width = int(video.get(3))  # フレームの幅
-    frame_height = int(video.get(4))  # フレームの高さ
+    frame_width = int(video.get(3))
+    frame_height = int(video.get(4))
 
     x, y = get_aspect_ratio(frame_width, frame_height)
 
@@ -229,8 +240,27 @@ def analyze_movie(movie_path):
         video_type = FRAME_RESOLUTION.index((x, y))
     except ValueError:
         video.release()
+        return ERROR_NOT_SUPPORTED, None
 
-        return None, None, None, None, ERROR_NOT_SUPPORTED
+    if (frame_count / frame_rate) >= 600:
+        video.release()
+        return ERROR_TOO_LONG, None
+
+    video.release()
+
+    return NO_ERROR, video_type
+
+
+def analyze_movie(movie_path):
+    # 動画解析し結果をリストで返す
+    start_time = tm.time()
+    # 動画の確認
+    video_type = movie_check(movie_path)
+
+    video = cv2.VideoCapture(movie_path)
+
+    frame_count = int(video.get(7))  # フレーム数を取得
+    frame_rate = int(video.get(5))  # フレームレート(1フレームの時間単位はミリ秒)の取得
 
     model_init(video_type)
     roi_init(video_type)
@@ -262,59 +292,58 @@ def analyze_movie(movie_path):
     cap_interval = int(frame_rate * n)
     skip_frame = 5 * cap_interval
 
-    if (frame_count / frame_rate) < 600:  # 10分未満の動画しか見ない
-        for i in range(frame_count):  # 動画の秒数を取得し、回す
-            ret = video.grab()
-            if ret is False:
-                break
+    for i in range(frame_count):  # 動画の秒数を取得し、回す
+        ret = video.grab()
+        if ret is False:
+            break
 
-            if i % cap_interval is 0:
-                if ((i - ub_interval) > skip_frame) or (ub_interval == 0):
-                    ret, original_frame = video.read()
+        if i % cap_interval is 0:
+            if ((i - ub_interval) > skip_frame) or (ub_interval == 0):
+                ret, original_frame = video.read()
 
-                    if ret is False:
-                        break
-                    work_frame = edit_frame(original_frame)
+                if ret is False:
+                    break
+                work_frame = edit_frame(original_frame)
 
-                    if menu_check is False:
-                        menu_check, menu_loc = analyze_menu_frame(work_frame, MENU_DATA, MENU_ROI)
-                        if menu_check is True:
-                            loc_diff = np.array(MENU_LOC) - np.array(menu_loc)
-                            roi_diff = (loc_diff[0], loc_diff[1], loc_diff[0], loc_diff[1])
-                            min_roi = np.array(MIN_ROI) - np.array(roi_diff)
-                            tensec_roi = np.array(TEN_SEC_ROI) - np.array(roi_diff)
-                            onesec_roi = np.array(ONE_SEC_ROI) - np.array(roi_diff)
-                            ub_roi = np.array(UB_ROI) - np.array(roi_diff)
-                            score_roi = np.array(SCORE_ROI) - np.array(roi_diff)
-                            damage_data_roi = np.array(DAMAGE_DATA_ROI) - np.array(roi_diff)
+                if menu_check is False:
+                    menu_check, menu_loc = analyze_menu_frame(work_frame, MENU_DATA, MENU_ROI)
+                    if menu_check is True:
+                        loc_diff = np.array(MENU_LOC) - np.array(menu_loc)
+                        roi_diff = (loc_diff[0], loc_diff[1], loc_diff[0], loc_diff[1])
+                        min_roi = np.array(MIN_ROI) - np.array(roi_diff)
+                        tensec_roi = np.array(TEN_SEC_ROI) - np.array(roi_diff)
+                        onesec_roi = np.array(ONE_SEC_ROI) - np.array(roi_diff)
+                        ub_roi = np.array(UB_ROI) - np.array(roi_diff)
+                        score_roi = np.array(SCORE_ROI) - np.array(roi_diff)
+                        damage_data_roi = np.array(DAMAGE_DATA_ROI) - np.array(roi_diff)
 
-                            analyze_anna_icon_frame(work_frame, CHARACTER_ICON_ROI, characters_find)
+                        analyze_anna_icon_frame(work_frame, CHARACTER_ICON_ROI, characters_find)
 
-                    else:
-                        if time_min is "1":
-                            time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
+                else:
+                    if time_min is "1":
+                        time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
 
-                        time_sec10 = analyze_timer_frame(work_frame, tensec_roi, 6, time_sec10)
-                        time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
+                    time_sec10 = analyze_timer_frame(work_frame, tensec_roi, 6, time_sec10)
+                    time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
 
-                        ub_result = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
-                                                     ub_data, ub_data_value, characters_find)
+                    ub_result = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
+                                                 ub_data, ub_data_value, characters_find)
 
-                        if ub_result is FOUND:
-                            ub_interval = i
+                    if ub_result is FOUND:
+                        ub_interval = i
 
-                        # スコア表示の有無を確認
-                        ret = analyze_score_frame(work_frame, SCORE_DATA, score_roi)
+                    # スコア表示の有無を確認
+                    ret = analyze_score_frame(work_frame, SCORE_DATA, score_roi)
+
+                    if ret is True:
+                        # 総ダメージ解析
+                        ret = analyze_damage_frame(original_frame, damage_data_roi, tmp_damage)
 
                         if ret is True:
-                            # 総ダメージ解析
-                            ret = analyze_damage_frame(original_frame, damage_data_roi, tmp_damage)
+                            total_damage = "総ダメージ " + ''.join(tmp_damage)
+                            print(total_damage)
 
-                            if ret is True:
-                                total_damage = "総ダメージ " + ''.join(tmp_damage)
-                                print(total_damage)
-
-                            break
+                        break
 
     video.release()
 
