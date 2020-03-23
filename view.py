@@ -52,28 +52,11 @@ NUM_BACKGROUND_DRAG = 6
 # analyze_frame
 NUM_BACKGROUND_ANALYZE = 6
 
-FILE = 0
-YOUTUBE = 1
-
 FILE_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 
 def change_page(page):
     page.tkraise()
-
-
-def check_input(input_text):
-    file_exist = os.path.exists(input_text)
-
-    if file_exist is True:
-        return True, FILE
-    elif input_text.startswith("http"):
-        ret = app.get_youtube_id(input_text)
-
-        if ret is not False:
-            return True, YOUTUBE
-
-    return False, FILE
 
 
 class Frame(tk.Tk):
@@ -232,15 +215,7 @@ class Frame(tk.Tk):
             self.text_box.insert(tk.END, file)
 
             FILE_DIR = os.path.dirname(file)
-            status = app.movie_check(file)[0]
-
-            if status is app.NO_ERROR:
-                print("OK")
-                self.bt_start_push(self)
-            elif status is app.ERROR_NOT_SUPPORTED:
-                print("ERROR_NOT_SUPPORTED RESOLUTION")
-            elif status is app.ERROR_TOO_LONG:
-                print("ERROR_TOO_LONG")
+            self.bt_start_push(self)
 
     # STARTボタン用イベント (layer:5)
     def bt_start_nm(self, event):
@@ -251,13 +226,13 @@ class Frame(tk.Tk):
 
     def bt_start_push(self, event):
         input_text = self.text_box.get()
+        file_path = input_text.strip()
+        file_status = app.analyze_transition_check(file_path, self)
 
-        status, file_type = check_input(input_text)
+        if file_status is app.NO_ERROR:
+            self.text_box.delete(0, tk.END)
 
-        self.text_box.delete(0, tk.END)
-        self.analyze_frame.tkraise()
-
-        print(input_text)
+        print(input_text + "\n")
 
 
 if __name__ == "__main__":

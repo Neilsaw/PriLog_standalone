@@ -109,7 +109,6 @@ cache_dir = "cache/"
 if not os.path.exists(cache_dir):
     os.mkdir(cache_dir)
 
-
 pending_dir = "pending/"
 if not os.path.exists(pending_dir):
     os.mkdir(pending_dir)
@@ -225,30 +224,28 @@ def get_aspect_ratio(width, height):
     return x, y
 
 
-def movie_check(movie_path):
-    video = cv2.VideoCapture(movie_path)
-
-    frame_count = int(video.get(7))
-    frame_rate = int(video.get(5))
-
-    frame_width = int(video.get(3))
-    frame_height = int(video.get(4))
-
-    x, y = get_aspect_ratio(frame_width, frame_height)
-
+def search(youtube_id):
+    # youtubeの動画を検索し取得
+    youtube_url = 'https://www.youtube.com/watch?v=' + youtube_id
     try:
-        video_type = FRAME_RESOLUTION.index((x, y))
-    except ValueError:
-        video.release()
-        return ERROR_NOT_SUPPORTED, None
+        yt = YouTube(youtube_url)
+    except:
+        return None, None, ERROR_CANT_GET_MOVIE
 
-    if (frame_count / frame_rate) >= 600:
-        video.release()
-        return ERROR_TOO_LONG, None
+    movie_thumbnail = yt.thumbnail_url
+    movie_length = yt.length
+    if int(movie_length) > 480:
+        return None, None, ERROR_TOO_LONG
 
-    video.release()
+    stream = yt.streams.get_by_itag("22")
+    if stream is None:
+        return None, None, ERROR_NOT_SUPPORTED
 
-    return NO_ERROR, video_type
+    movie_title = stream.title
+    movie_name = tm.time()
+    movie_path = stream.download(stream_dir, str(movie_name))
+
+    return movie_path, movie_title, NO_ERROR
 
 
 def analyze_movie(movie_path):
@@ -596,6 +593,107 @@ def main():
         print("解析成功")
     else:
         print("申し訳ありません。非対応の解像度です。16:9の解像度に対応しています。")
+
+
+# view用定義
+FILE = 0
+YOUTUBE = 1
+
+
+# view用関数
+def movie_check(movie_path):
+    video = cv2.VideoCapture(movie_path)
+
+    frame_count = int(video.get(7))
+    frame_rate = int(video.get(5))
+
+    frame_width = int(video.get(3))
+    frame_height = int(video.get(4))
+
+    x, y = get_aspect_ratio(frame_width, frame_height)
+
+    try:
+        video_type = FRAME_RESOLUTION.index((x, y))
+    except ValueError:
+        video.release()
+        return ERROR_NOT_SUPPORTED, None
+
+    if (frame_count / frame_rate) >= 600:
+        video.release()
+        return ERROR_TOO_LONG, None
+
+    video.release()
+
+    return NO_ERROR, video_type
+
+
+def check_input(file_path):
+    file_exist = os.path.exists(file_path)
+
+    if file_exist is True:
+        # FILE
+        ext = os.path.splitext(file_path)[1]
+        if ext is ".mp4":
+            # 拡張子がmp4
+            return True, FILE
+
+        return False, FILE
+
+    elif file_path.startswith("http"):
+        # YOUTUBE
+        ret = get_youtube_id(file_path)
+
+        if ret is not False:
+            # YOUTUBE URLとして成立
+            return True, YOUTUBE
+
+        return False, YOUTUBE
+
+    return False, FILE
+
+
+def analyze_transition_check(file_path, self):
+    status, file_type = check_input(file_path)
+
+    if status is True:
+        # 入力正常時
+        if file_type is FILE:
+            # FILEの場合の画面遷移
+            file_status = movie_check(file_path)[0]
+
+            if file_status is NO_ERROR:
+                # analyzeに遷移(FILE)
+                self.analyze_frame.tkraise()
+        elif file_type is YOUTUBE:
+            # Youtubeの場合の画面遷移
+            movie_path, movie_name, file_status = search(file_path)
+
+            if file_status is NO_ERROR:
+                # analyzeに遷移(YOUTUBE)
+                self.analyze_frame.tkraise()
+        else:
+            # 本来ならば到達しないコード
+            file_status = ERROR_REQUIRED_PARAM
+
+    elif status is False:
+        # 入力異常時
+        if file_type is FILE:
+            # FILEのPATH異常
+            file_status = ERROR_CANT_GET_MOVIE
+
+        elif file_type is YOUTUBE:
+            # YoutubeのURL異常
+            file_status = ERROR_BAD_URL
+
+        else:
+            # 本来ならば到達しないコード
+            file_status = ERROR_REQUIRED_PARAM
+
+    else:
+        # 本来ならば到達しないコード
+        file_status = ERROR_REQUIRED_PARAM
+
+    return file_status
 
 
 if __name__ == "__main__":
