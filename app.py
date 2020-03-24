@@ -633,7 +633,7 @@ def check_input(file_path):
     if file_exist is True:
         # FILE
         ext = os.path.splitext(file_path)[1]
-        if ext is ".mp4":
+        if ext == ".mp4":
             # 拡張子がmp4
             return True, FILE
 
