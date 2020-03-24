@@ -14,6 +14,7 @@ import sys
 import urllib.parse
 import characters as cd
 import after_caluculation as ac
+import view
 
 # キャラクター名テンプレート
 CHARACTERS_DATA = []
@@ -248,11 +249,11 @@ def search(youtube_id):
     return movie_path, movie_title, NO_ERROR
 
 
-def analyze_movie(movie_path):
+def analyze_movie(movie_path, self):
     # 動画解析し結果をリストで返す
     start_time = tm.time()
     # 動画の確認
-    video_type = movie_check(movie_path)
+    video_type = movie_check(movie_path)[1]
 
     video = cv2.VideoCapture(movie_path)
 
@@ -324,7 +325,7 @@ def analyze_movie(movie_path):
                     time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
 
                     ub_result = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
-                                                 ub_data, ub_data_value, characters_find)
+                                                 ub_data, ub_data_value, characters_find, self)
 
                     if ub_result is FOUND:
                         ub_interval = i
@@ -368,7 +369,7 @@ def edit_frame(frame):
     return work_frame
 
 
-def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_data_value, characters_find):
+def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_data_value, characters_find, self):
     # ub文字位置を解析　5キャラ見つけている場合は探索対象を5キャラにする
     analyze_frame = frame[roi[1]:roi[3], roi[0]:roi[2]]
 
@@ -390,7 +391,7 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
 
         if ub_result is FOUND:
             ub_data.append(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
-            print(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
+            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
             ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
             if tmp_character[1] not in characters_find:
                 characters_find.append(tmp_character[1])
@@ -407,7 +408,7 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
 
         if ub_result is FOUND:
             ub_data.append(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
-            print(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
+            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
             ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
 
     return ub_result
@@ -655,6 +656,8 @@ def check_input(file_path):
 def analyze_transition_check(file_path):
     status, file_type = check_input(file_path)
 
+    movie_path = file_path
+
     if status is True:
         # 入力正常時
         if file_type is FILE:
@@ -687,7 +690,7 @@ def analyze_transition_check(file_path):
         # 本来ならば到達しないコード
         file_status = ERROR_REQUIRED_PARAM
 
-    return file_status
+    return file_status, movie_path
 
 
 if __name__ == "__main__":

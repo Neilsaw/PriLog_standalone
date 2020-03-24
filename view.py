@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.filedialog
+import tkinter.scrolledtext
 import sys
 import os
 from PIL import Image, ImageTk
@@ -57,6 +58,10 @@ FILE_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 def change_page(page):
     page.tkraise()
+
+
+def set_ub_text(self, input_text):
+    self.ub_text.insert(tk.END, input_text + "\n")
 
 
 class Frame(tk.Tk):
@@ -154,6 +159,35 @@ class Frame(tk.Tk):
         self.header_bt_home_2.bind("<ButtonRelease-1>", self.bt_change_to_home)
         self.header_bt_home_2.place(x=0, y=0)
 
+        # 画像エリアを設定 (layer:3)
+        self.capture_area = tk.Label(self.analyze_frame, image="",
+                                     width=398, height=112, bg="#272727", font=("", 1), bd=0)
+        self.capture_area.place(x=39, y=147)
+
+        # UBエリアを設定 (layer:4)
+        self.ub_area = tk.Label(self.analyze_frame, image="",
+                                width=363, height=202, bg="#272727", font=("", 1), bd=0)
+        self.ub_area.place(x=538, y=59)
+
+        # UB入力欄背景1を設定 (layer:5)
+        self.ub_area = tk.Label(self.analyze_frame, image="",
+                                width=332, height=187, bg="#d4edf4", font=("", 1), bd=0)
+        self.ub_area.place(x=555, y=75)
+
+        # UB入力欄背景2を設定 (layer:6)
+        self.ub_area = tk.Label(self.analyze_frame, image="",
+                                width=0, height=187, bg="#ffffff", font=("", 1), bd=0)
+        self.ub_area.place(x=872, y=75)
+
+        # UB入力欄背景3を設定 (layer:7)
+        self.ub_area = tk.Label(self.analyze_frame, image="",
+                                width=14, height=187, bg="#f0f0f0", font=("", 1), bd=0)
+        self.ub_area.place(x=873, y=75)
+
+        # UB入力欄を設定 (layer:8)
+        self.ub_text = tk.scrolledtext.ScrolledText(self.analyze_frame, width=34, height=16,
+                                                    fg="#4d4d4d", bg="#d4edf4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text.place(x=564, y=79)
         """
         # 入力フォームを設定 (layer:3)
         self.text_box = tk.Entry(self.analyze_frame, width=38, fg="#a0a0a0", bg="#FFFFFF",
@@ -178,6 +212,7 @@ class Frame(tk.Tk):
         """
 
         self.main_frame.tkraise()
+        #self.analyze_frame.tkraise()
 
     # -----------------------------イベント設定-----------------------------
 
@@ -227,11 +262,12 @@ class Frame(tk.Tk):
     def bt_start_push(self, event):
         input_text = self.text_box.get()
         file_path = input_text.strip()
-        file_status = app.analyze_transition_check(file_path)
+        file_status, movie_path = app.analyze_transition_check(file_path)
 
         if file_status is app.NO_ERROR:
             self.analyze_frame.tkraise()
             self.text_box.delete(0, tk.END)
+            app.analyze_movie(movie_path, self)
 
         print(input_text + "\n")
 
