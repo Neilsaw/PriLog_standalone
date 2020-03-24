@@ -227,9 +227,10 @@ class Frame(tk.Tk):
     def bt_start_push(self, event):
         input_text = self.text_box.get()
         file_path = input_text.strip()
-        file_status = app.analyze_transition_check(file_path, self)
+        file_status = app.analyze_transition_check(file_path)
 
         if file_status is app.NO_ERROR:
+            self.analyze_frame.tkraise()
             self.text_box.delete(0, tk.END)
 
         print(input_text + "\n")

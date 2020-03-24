@@ -652,7 +652,7 @@ def check_input(file_path):
     return False, FILE
 
 
-def analyze_transition_check(file_path, self):
+def analyze_transition_check(file_path):
     status, file_type = check_input(file_path)
 
     if status is True:
@@ -661,16 +661,10 @@ def analyze_transition_check(file_path, self):
             # FILEの場合の画面遷移
             file_status = movie_check(file_path)[0]
 
-            if file_status is NO_ERROR:
-                # analyzeに遷移(FILE)
-                self.analyze_frame.tkraise()
         elif file_type is YOUTUBE:
             # Youtubeの場合の画面遷移
             movie_path, movie_name, file_status = search(file_path)
 
-            if file_status is NO_ERROR:
-                # analyzeに遷移(YOUTUBE)
-                self.analyze_frame.tkraise()
         else:
             # 本来ならば到達しないコード
             file_status = ERROR_REQUIRED_PARAM
