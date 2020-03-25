@@ -4,11 +4,14 @@ import tkinter.scrolledtext
 import sys
 import os
 from PIL import Image, ImageTk
+import threading
 import app
 
 ICON = "./picture/icon.ico"
 
 imgs = []
+
+app_thread = None
 
 # main_frame
 BACKGROUND_TOP = "./picture/bg_top.png"
@@ -62,6 +65,20 @@ def change_page(page):
 
 def set_ub_text(self, input_text):
     self.ub_text.insert(tk.END, input_text + "\n")
+
+
+def set_ub_capture(self, capture):
+    work_img = ImageTk.PhotoImage(capture)
+    self.capture_area.configure(image=work_img)
+
+
+def thread_init():
+    global app_thread
+
+    if app_thread:
+        app.set_analyze_status()
+        app_thread.join()
+        app_thread = None
 
 
 class Frame(tk.Tk):
@@ -229,6 +246,7 @@ class Frame(tk.Tk):
     def bt_change_to_home(self, event):
         self.main_frame.tkraise()
         self.text_box.delete(0, tk.END)
+        thread_init()
 
     # ---------------------MAIN画面の設定---------------------
     # SELECTボタン用イベント (layer:4)
@@ -260,6 +278,8 @@ class Frame(tk.Tk):
         self.bt_start.configure(image=imgs[NUM_BUTTON_START_2], bg="#599ea2", cursor="hand2")
 
     def bt_start_push(self, event):
+        global app_thread
+
         input_text = self.text_box.get()
         file_path = input_text.strip()
         file_status, movie_path = app.analyze_transition_check(file_path)
@@ -267,11 +287,14 @@ class Frame(tk.Tk):
         if file_status is app.NO_ERROR:
             self.analyze_frame.tkraise()
             self.text_box.delete(0, tk.END)
-            app.analyze_movie(movie_path, self)
-
-        print(input_text + "\n")
+            self.ub_text.delete('1.0', tk.END)
+            self.capture_area.configure(image="")
+            thread_init()
+            app_thread = threading.Thread(target=app.analyze_movie, args=(movie_path, self))
+            app_thread.start()
 
 
 if __name__ == "__main__":
     f = Frame()
     f.mainloop()
+    thread_init()

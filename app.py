@@ -102,6 +102,9 @@ ERROR_PROCESS_FAILED = 6
 # キャッシュ格納数
 CACHE_NUM = 5
 
+# VIEWとのIF用
+ANALYZE_STATUS = True
+
 stream_dir = "tmp/"
 if not os.path.exists(stream_dir):
     os.mkdir(stream_dir)
@@ -250,6 +253,10 @@ def search(youtube_id):
 
 
 def analyze_movie(movie_path, self):
+    global ANALYZE_STATUS
+
+    ANALYZE_STATUS = True
+
     # 動画解析し結果をリストで返す
     start_time = tm.time()
     # 動画の確認
@@ -293,6 +300,10 @@ def analyze_movie(movie_path, self):
     for i in range(frame_count):  # 動画の秒数を取得し、回す
         ret = video.grab()
         if ret is False:
+            break
+
+        # VIEWからのスレッド停止?
+        if ANALYZE_STATUS is False:
             break
 
         if i % cap_interval is 0:
@@ -353,6 +364,8 @@ def analyze_movie(movie_path, self):
     print("動画時間 : {:.3f}".format(frame_count / frame_rate) + "  sec")
     time_data.append("処理時間 : {:.3f}".format(time_result) + "  sec")
     print("処理時間 : {:.3f}".format(time_result) + "  sec")
+
+    view.thread_init()
 
     return ub_data, time_data, total_damage, debuff_value, NO_ERROR
 
@@ -691,6 +704,12 @@ def analyze_transition_check(file_path):
         file_status = ERROR_REQUIRED_PARAM
 
     return file_status, movie_path
+
+
+def set_analyze_status():
+    global ANALYZE_STATUS
+
+    ANALYZE_STATUS = False
 
 
 if __name__ == "__main__":
