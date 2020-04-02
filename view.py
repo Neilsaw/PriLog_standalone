@@ -4,12 +4,15 @@ import tkinter.scrolledtext
 import sys
 import os
 from PIL import Image, ImageTk
+import numpy as np
 import threading
 import app
 
 ICON = "./picture/icon.ico"
 
-imgs = []
+images = []
+
+capture_images = None
 
 app_thread = None
 
@@ -28,6 +31,7 @@ BACKGROUND_DRAG = "./picture/bg_top_drag.png"
 
 # analyze_frame
 BACKGROUND_ANALYZE = "./picture/bg_analyze.png"
+BACKGROUND_CAPTURE = "./picture/bg_capture.png"
 
 PICTURE_PATH = [
     BACKGROUND_TOP,
@@ -38,6 +42,7 @@ PICTURE_PATH = [
     BUTTON_START_2,
     #BACKGROUND_DRAG,
     BACKGROUND_ANALYZE,
+    BACKGROUND_CAPTURE,
 ]
 
 # main_frame
@@ -55,6 +60,7 @@ NUM_BACKGROUND_DRAG = 6
 
 # analyze_frame
 NUM_BACKGROUND_ANALYZE = 6
+NUM_BACKGROUND_CAPTURE = 7
 
 FILE_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
 
@@ -67,9 +73,14 @@ def set_ub_text(self, input_text):
     self.ub_text.insert(tk.END, input_text + "\n")
 
 
-def set_ub_capture(self, capture):
-    work_img = ImageTk.PhotoImage(capture)
-    self.capture_area.configure(image=work_img)
+def set_ub_capture(self, frame):
+    global capture_images
+
+    work_img = Image.fromarray(frame)
+    work_img = work_img.resize((384, 216))
+    work_img = ImageTk.PhotoImage(work_img)
+    capture_images = work_img
+    self.capture_area.configure(image=work_img, width=400, height=226)
 
 
 def thread_init():
@@ -94,14 +105,14 @@ class Frame(tk.Tk):
         for i in range(len(PICTURE_PATH)):
             work_img = Image.open(PICTURE_PATH[i])
             work_img = ImageTk.PhotoImage(work_img)
-            imgs.append(work_img)
+            images.append(work_img)
 
         # -----------------------------画面設定-----------------------------
         # ---------------------MAIN画面の設定---------------------
         self.main_frame = tk.Frame()
         self.main_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
-        self.bg = tk.Label(self.main_frame, image=imgs[NUM_BACKGROUND_TOP], bd=0)
+        self.bg = tk.Label(self.main_frame, image=images[NUM_BACKGROUND_TOP], bd=0)
         self.bg.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
@@ -109,7 +120,7 @@ class Frame(tk.Tk):
         self.header.place(x=0, y=0)
 
         # Homeボタンを設定 (layer:2)
-        self.header_bt_home_1 = tk.Label(self.main_frame, image=imgs[NUM_BUTTON_HOME],
+        self.header_bt_home_1 = tk.Label(self.main_frame, image=images[NUM_BUTTON_HOME],
                                          width=95, height=26, bg="#272727")
         self.header_bt_home_1.bind("<Leave>", self.bt_home_nm)
         self.header_bt_home_1.bind("<Enter>", self.bt_home_select)
@@ -122,7 +133,7 @@ class Frame(tk.Tk):
         self.text_box.place(x=267, y=278)
 
         # SELECTボタン設定 (layer:4)
-        self.bt_select = tk.Label(self.main_frame, image=imgs[NUM_BUTTON_SELECT],
+        self.bt_select = tk.Label(self.main_frame, image=images[NUM_BUTTON_SELECT],
                                   width=72, height=33, bg="#94DADE", bd=0)
         self.bt_select.bind("<Leave>", self.bt_select_nm)
         self.bt_select.bind("<Enter>", self.bt_select_nm_select)
@@ -130,7 +141,7 @@ class Frame(tk.Tk):
         self.bt_select.place(x=621, y=278)
 
         # STARTボタン設定 (layer:5)
-        self.bt_start = tk.Label(self.main_frame, image=imgs[NUM_BUTTON_START],
+        self.bt_start = tk.Label(self.main_frame, image=images[NUM_BUTTON_START],
                                  width=72, height=33, bg="#94DADE", bd=0)
         self.bt_start.bind("<Leave>", self.bt_start_nm)
         self.bt_start.bind("<Enter>", self.bt_start_nm_select)
@@ -161,7 +172,7 @@ class Frame(tk.Tk):
         self.analyze_frame = tk.Frame()
         self.analyze_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
-        self.bg = tk.Label(self.analyze_frame, image=imgs[NUM_BACKGROUND_ANALYZE], bd=0)
+        self.bg = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
         self.bg.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
@@ -169,7 +180,7 @@ class Frame(tk.Tk):
         self.header.place(x=0, y=0)
 
         # Homeボタンを設定 (layer:2)
-        self.header_bt_home_2 = tk.Label(self.analyze_frame, image=imgs[NUM_BUTTON_HOME],
+        self.header_bt_home_2 = tk.Label(self.analyze_frame, image=images[NUM_BUTTON_HOME],
                                          width=95, height=26, bg="#272727")
         self.header_bt_home_2.bind("<Leave>", self.bt_home_nm)
         self.header_bt_home_2.bind("<Enter>", self.bt_home_select)
@@ -177,7 +188,7 @@ class Frame(tk.Tk):
         self.header_bt_home_2.place(x=0, y=0)
 
         # 画像エリアを設定 (layer:3)
-        self.capture_area = tk.Label(self.analyze_frame, image="",
+        self.capture_area = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_CAPTURE],
                                      width=398, height=112, bg="#272727", font=("", 1), bd=0)
         self.capture_area.place(x=39, y=147)
 
@@ -246,15 +257,16 @@ class Frame(tk.Tk):
     def bt_change_to_home(self, event):
         self.main_frame.tkraise()
         self.text_box.delete(0, tk.END)
+        self.capture_area.configure(image="", width=398, height=112)
         thread_init()
 
     # ---------------------MAIN画面の設定---------------------
     # SELECTボタン用イベント (layer:4)
     def bt_select_nm(self, event):
-        self.bt_select.configure(image=imgs[NUM_BUTTON_SELECT], bg="#94DADE", cursor="arrow")
+        self.bt_select.configure(image=images[NUM_BUTTON_SELECT], bg="#94DADE", cursor="arrow")
 
     def bt_select_nm_select(self, event):
-        self.bt_select.configure(image=imgs[NUM_BUTTON_SELECT_2], bg="#599ea2", cursor="hand2")
+        self.bt_select.configure(image=images[NUM_BUTTON_SELECT_2], bg="#599ea2", cursor="hand2")
 
     def bt_select_push(self, event):
         global FILE_DIR
@@ -272,10 +284,10 @@ class Frame(tk.Tk):
 
     # STARTボタン用イベント (layer:5)
     def bt_start_nm(self, event):
-        self.bt_start.configure(image=imgs[NUM_BUTTON_START], bg="#94DADE", cursor="arrow")
+        self.bt_start.configure(image=images[NUM_BUTTON_START], bg="#94DADE", cursor="arrow")
 
     def bt_start_nm_select(self, event):
-        self.bt_start.configure(image=imgs[NUM_BUTTON_START_2], bg="#599ea2", cursor="hand2")
+        self.bt_start.configure(image=images[NUM_BUTTON_START_2], bg="#599ea2", cursor="hand2")
 
     def bt_start_push(self, event):
         global app_thread

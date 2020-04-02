@@ -329,9 +329,7 @@ def analyze_movie(movie_path, self):
                         analyze_anna_icon_frame(work_frame, CHARACTER_ICON_ROI, characters_find)
 
                 else:
-                    if time_min is "1":
-                        time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
-
+                    time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
                     time_sec10 = analyze_timer_frame(work_frame, tensec_roi, 6, time_sec10)
                     time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
 
@@ -340,6 +338,9 @@ def analyze_movie(movie_path, self):
 
                     if ub_result is FOUND:
                         ub_interval = i
+                        # 検出時の画像をviewに渡す
+                        capture_frame = cv2.cvtColor(original_frame, cv2.COLOR_BGR2RGB)
+                        view.set_ub_capture(self, capture_frame)
 
                     # スコア表示の有無を確認
                     ret = analyze_score_frame(work_frame, SCORE_DATA, score_roi)
@@ -403,8 +404,9 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
                 ub_result = FOUND
 
         if ub_result is FOUND:
+            # UB データに対する処理
             ub_data.append(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
-            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
+            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
             ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
             if tmp_character[1] not in characters_find:
                 characters_find.append(tmp_character[1])
@@ -420,8 +422,9 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
                 ub_result = FOUND
 
         if ub_result is FOUND:
+            # UB データに対する処理
             ub_data.append(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
-            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
+            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
             ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
 
     return ub_result
