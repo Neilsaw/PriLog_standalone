@@ -71,6 +71,7 @@ def change_page(page):
 
 def set_ub_text(self, input_text):
     self.ub_text.insert(tk.END, input_text + "\n")
+    self.ub_text.see("end")
 
 
 def set_ub_capture(self, frame):
