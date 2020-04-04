@@ -83,8 +83,8 @@ def change_page(page):
 
 
 def set_ub_text(self, input_text):
-    self.ub_text.insert(tk.END, input_text + "\n")
-    self.ub_text.see("end")
+    self.ub_text_analyze.insert(tk.END, input_text + "\n")
+    self.ub_text_analyze.see("end")
 
 
 def set_ub_capture(self, frame):
@@ -94,7 +94,31 @@ def set_ub_capture(self, frame):
     work_img = work_img.resize((384, 216))
     work_img = ImageTk.PhotoImage(work_img)
     capture_image = work_img
-    self.capture_area.configure(image=work_img, width=400, height=226)
+    self.capture_area_analyze.configure(image=work_img, width=400, height=226)
+
+
+def set_result_frame(self):
+    global images
+    global capture_image
+    global analyze_status
+
+    analyze_txt = self.ub_text_analyze.get("1.0", tk.END)
+    analyze_txt = analyze_txt.rstrip()
+    analyze_txt = analyze_txt + "\n\n"
+
+    self.ub_text_result.insert("1.0", analyze_txt)
+    self.ub_text_result.see("end")
+
+    self.capture_area_result.configure(image=capture_image, width=400, height=226)
+
+    analyze_status = False
+
+    thread_init()
+
+    self.result_frame.tkraise()
+
+    self.ub_text_analyze.delete("1.0", tk.END)
+    self.capture_area_analyze.configure(image="", width=398, height=112)
 
 
 def thread_init():
@@ -113,7 +137,10 @@ def home_init(self):
 
     self.main_frame.tkraise()
     self.text_box.delete(0, tk.END)
-    self.capture_area.configure(image="", width=398, height=112)
+    self.ub_text_analyze.delete('1.0', tk.END)
+    self.ub_text_result.delete('1.0', tk.END)
+    self.capture_area_analyze.configure(image="", width=398, height=112)
+    self.capture_area_result.configure(image="", width=398, height=112)
 
     capture_image = None
     analyze_status = True
@@ -217,12 +244,12 @@ class Frame(tk.Tk):
         self.header_bt_home_analyze.place(x=0, y=0)
 
         # ボディHomeボタンを設定 (layer:3)
-        self.body_bt_home = tk.Label(self.analyze_frame, image=images[NUM_BUTTON_HOME],
-                                     width=123, height=41, bg="#484848")
-        self.body_bt_home.bind("<Leave>", self.body_bt_home_nm)
-        self.body_bt_home.bind("<Enter>", self.body_bt_home_select)
-        self.body_bt_home.bind("<ButtonRelease-1>", self.body_bt_change_to_home)
-        self.body_bt_home.place(x=178, y=480)
+        self.body_bt_home_analyze = tk.Label(self.analyze_frame, image=images[NUM_BUTTON_HOME],
+                                             width=123, height=41, bg="#484848")
+        self.body_bt_home_analyze.bind("<Leave>", self.body_bt_home_analyze_nm)
+        self.body_bt_home_analyze.bind("<Enter>", self.body_bt_home_analyze_select)
+        self.body_bt_home_analyze.bind("<ButtonRelease-1>", self.body_bt_change_to_home_analyze)
+        self.body_bt_home_analyze.place(x=178, y=480)
 
         # ボディ一時停止/開始ボタンを設定 (layer:4)
         self.body_bt_do_stop = tk.Label(self.analyze_frame, image=images[NUM_BUTTON_STOP],
@@ -233,34 +260,101 @@ class Frame(tk.Tk):
         self.body_bt_do_stop.place(x=659, y=480)
 
         # 画像エリアを設定 (layer:5)
-        self.capture_area = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_CAPTURE],
-                                     width=398, height=112, bg="#272727", font=("", 1), bd=0)
-        self.capture_area.place(x=39, y=147)
+        self.capture_area_analyze = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_CAPTURE],
+                                             width=398, height=112, bg="#272727", font=("", 1), bd=0)
+        self.capture_area_analyze.place(x=39, y=147)
 
         # UBテキストエリアを設定 (layer:6)
-        self.ub_area = tk.Label(self.analyze_frame, image="",
-                                width=363, height=202, bg="#272727", font=("", 1), bd=0)
-        self.ub_area.place(x=538, y=59)
+        self.ub_area_analyze = tk.Label(self.analyze_frame, image="",
+                                        width=363, height=202, bg="#272727", font=("", 1), bd=0)
+        self.ub_area_analyze.place(x=538, y=59)
 
         # UB入力欄背景1を設定 (layer:7)
-        self.ub_area_bg1 = tk.Label(self.analyze_frame, image="",
-                                    width=332, height=187, bg="#d4edf4", font=("", 1), bd=0)
-        self.ub_area_bg1.place(x=555, y=75)
+        self.ub_area_analyze_bg1 = tk.Label(self.analyze_frame, image="",
+                                            width=332, height=187, bg="#d4edf4", font=("", 1), bd=0)
+        self.ub_area_analyze_bg1.place(x=555, y=75)
 
         # UB入力欄背景2を設定 (layer:8)
-        self.ub_area_bg2 = tk.Label(self.analyze_frame, image="",
-                                    width=0, height=187, bg="#ffffff", font=("", 1), bd=0)
-        self.ub_area_bg2.place(x=872, y=75)
+        self.ub_area_analyze_bg2 = tk.Label(self.analyze_frame, image="",
+                                            width=0, height=187, bg="#ffffff", font=("", 1), bd=0)
+        self.ub_area_analyze_bg2.place(x=872, y=75)
 
         # UB入力欄背景3を設定 (layer:9)
-        self.ub_area_bg3 = tk.Label(self.analyze_frame, image="",
-                                    width=14, height=187, bg="#f0f0f0", font=("", 1), bd=0)
-        self.ub_area_bg3.place(x=873, y=75)
+        self.ub_area_analyze_bg3 = tk.Label(self.analyze_frame, image="",
+                                            width=14, height=187, bg="#f0f0f0", font=("", 1), bd=0)
+        self.ub_area_analyze_bg3.place(x=873, y=75)
 
         # UB入力欄を設定 (layer:10)
-        self.ub_text = tk.scrolledtext.ScrolledText(self.analyze_frame, width=34, height=16,
-                                                    fg="#4d4d4d", bg="#d4edf4", bd=0, font=("メイリオ", 11), relief="flat")
-        self.ub_text.place(x=564, y=79)
+        self.ub_text_analyze = tk.scrolledtext.ScrolledText(self.analyze_frame, width=34, height=16,
+                                                            fg="#4d4d4d", bg="#d4edf4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text_analyze.place(x=564, y=79)
+
+        # ---------------------結果画面の設定---------------------
+        self.result_frame = tk.Frame()
+        self.result_frame.grid(row=0, column=0, sticky=tk.W)
+        # 背景を設定(layer:0)
+        self.bg = tk.Label(self.result_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
+        self.bg.pack(fill="x")
+
+        # ヘッダーを設定 (layer:1)
+        self.header = tk.Label(self.result_frame, width=960, height=0, bg="#272727", font=("", 18))
+        self.header.place(x=0, y=0)
+
+        # ヘッダーHomeボタンを設定 (layer:2)
+        self.header_bt_home_result = tk.Label(self.result_frame, image=images[NUM_BUTTON_HOME],
+                                              width=95, height=26, bg="#272727")
+        self.header_bt_home_result.bind("<Leave>", self.header_bt_home_nm)
+        self.header_bt_home_result.bind("<Enter>", self.header_bt_home_select)
+        self.header_bt_home_result.bind("<ButtonRelease-1>", self.header_bt_change_to_home)
+        self.header_bt_home_result.place(x=0, y=0)
+
+        # ボディHomeボタンを設定 (layer:3)
+        self.body_bt_home_result = tk.Label(self.result_frame, image=images[NUM_BUTTON_HOME],
+                                     width=123, height=41, bg="#484848")
+        self.body_bt_home_result.bind("<Leave>", self.body_bt_home_result_nm)
+        self.body_bt_home_result.bind("<Enter>", self.body_bt_home_result_select)
+        self.body_bt_home_result.bind("<ButtonRelease-1>", self.body_bt_change_to_home_result)
+        self.body_bt_home_result.place(x=178, y=480)
+
+        # ボディコピーボタンを設定 (layer:4)
+        self.body_bt_copy = tk.Label(self.result_frame, image=images[NUM_BUTTON_STOP],
+                                        width=123, height=41, bg="#484848")
+        """
+        self.body_bt_do_stop.bind("<Leave>", self.body_bt_do_stop_nm)
+        self.body_bt_do_stop.bind("<Enter>", self.body_bt_do_stop_select)
+        self.body_bt_do_stop.bind("<ButtonRelease-1>", self.body_bt_do_stop_change)
+        """
+        self.body_bt_copy.place(x=659, y=480)
+
+        # 画像エリアを設定 (layer:5)
+        self.capture_area_result = tk.Label(self.result_frame, image=images[NUM_BACKGROUND_CAPTURE],
+                                     width=398, height=112, bg="#272727", font=("", 1), bd=0)
+        self.capture_area_result.place(x=39, y=147)
+
+        # UBテキストエリアを設定 (layer:6)
+        self.ub_area_result = tk.Label(self.result_frame, image="",
+                                       width=363, height=202, bg="#272727", font=("", 1), bd=0)
+        self.ub_area_result.place(x=538, y=59)
+
+        # UB入力欄背景1を設定 (layer:7)
+        self.ub_area_result_bg1 = tk.Label(self.result_frame, image="",
+                                           width=332, height=187, bg="#d4edf4", font=("", 1), bd=0)
+        self.ub_area_result_bg1.place(x=555, y=75)
+
+        # UB入力欄背景2を設定 (layer:8)
+        self.ub_area_result_bg2 = tk.Label(self.result_frame, image="",
+                                           width=0, height=187, bg="#ffffff", font=("", 1), bd=0)
+        self.ub_area_result_bg2.place(x=872, y=75)
+
+        # UB入力欄背景3を設定 (layer:9)
+        self.ub_area_result_bg3 = tk.Label(self.result_frame, image="",
+                                           width=14, height=187, bg="#f0f0f0", font=("", 1), bd=0)
+        self.ub_area_result_bg3.place(x=873, y=75)
+
+        # UB入力欄を設定 (layer:10)
+        self.ub_text_result = tk.scrolledtext.ScrolledText(self.result_frame, width=34, height=16, fg="#4d4d4d",
+                                                           bg="#d4edf4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text_result.place(x=564, y=79)
 
         """
         # 入力フォームを設定 (layer:3)
@@ -295,10 +389,12 @@ class Frame(tk.Tk):
     def header_bt_home_nm(self, event):
         self.header_bt_home_main.configure(bg="#272727", cursor="arrow")
         self.header_bt_home_analyze.configure(bg="#272727", cursor="arrow")
+        self.header_bt_home_result.configure(bg="#272727", cursor="arrow")
 
     def header_bt_home_select(self, event):
         self.header_bt_home_main.configure(bg="#585858", cursor="hand2")
         self.header_bt_home_analyze.configure(bg="#585858", cursor="hand2")
+        self.header_bt_home_result.configure(bg="#585858", cursor="hand2")
 
     def header_bt_change_to_home(self, event):
         home_init(self)
@@ -343,8 +439,8 @@ class Frame(tk.Tk):
         if file_status is app.NO_ERROR:
             self.analyze_frame.tkraise()
             self.text_box.delete(0, tk.END)
-            self.ub_text.delete('1.0', tk.END)
-            self.capture_area.configure(image="")
+            self.ub_text_analyze.delete('1.0', tk.END)
+            self.capture_area_analyze.configure(image="")
             analyze_status = True
             thread_init()
             app.set_analyze_status_do()
@@ -353,13 +449,13 @@ class Frame(tk.Tk):
 
     # ---------------------解析画面(layer:3~)の設定---------------------
     # ボディHomeボタン用イベント (layer:3)
-    def body_bt_home_nm(self, event):
-        self.body_bt_home.configure(bg="#484848", cursor="arrow")
+    def body_bt_home_analyze_nm(self, event):
+        self.body_bt_home_analyze.configure(bg="#484848", cursor="arrow")
 
-    def body_bt_home_select(self, event):
-        self.body_bt_home.configure(bg="#303030", cursor="hand2")
+    def body_bt_home_analyze_select(self, event):
+        self.body_bt_home_analyze.configure(bg="#303030", cursor="hand2")
 
-    def body_bt_change_to_home(self, event):
+    def body_bt_change_to_home_analyze(self, event):
         home_init(self)
 
     # ボディ一時停止/開始ボタン用イベント (layer:4)
@@ -388,6 +484,17 @@ class Frame(tk.Tk):
         # 解析状態を反転させボタンに反映
         analyze_status = not analyze_status
         self.body_bt_do_stop_select(self)
+
+    # ---------------------結果画面(layer:3~)の設定---------------------
+        # ボディHomeボタン用イベント (layer:3)
+    def body_bt_home_result_nm(self, event):
+        self.body_bt_home_result.configure(bg="#484848", cursor="arrow")
+
+    def body_bt_home_result_select(self, event):
+        self.body_bt_home_result.configure(bg="#303030", cursor="hand2")
+
+    def body_bt_change_to_home_result(self, event):
+        home_init(self)
 
 
 if __name__ == "__main__":

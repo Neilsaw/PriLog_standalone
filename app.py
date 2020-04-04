@@ -444,7 +444,9 @@ def analyze_movie(movie_path, self):
     time_data.append("処理時間 : {:.3f}".format(time_result) + "  sec")
     print("処理時間 : {:.3f}".format(time_result) + "  sec")
 
-    view.thread_init()
+    # VIEWへの終了通知
+    if ANALYZE_STATUS is not ANALYZE_STOP:
+        view.set_result_frame(self)
 
     return ub_data, time_data, total_damage, debuff_value, NO_ERROR
 
