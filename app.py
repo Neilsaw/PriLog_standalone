@@ -5,6 +5,7 @@ from pytube import YouTube
 from pytube import extract
 from pytube import exceptions
 import time as tm
+import datetime
 import cv2
 import json
 import tkinter
@@ -12,6 +13,7 @@ import tkinter.filedialog
 import tkinter.messagebox
 import sys
 import urllib.parse
+import itertools
 import characters as cd
 import after_caluculation as ac
 import view
@@ -33,6 +35,12 @@ DAMAGE_DATA = []
 
 # アンナアイコンテンプレート
 ICON_DATA = []
+
+# ダメージレポートテンプレート
+DETAIL_REPORT_DATA = []
+
+# 王冠テンプレート
+CROWN_DATA = []
 
 # キャラクター名一覧
 CHARACTERS = cd.characters_name
@@ -68,6 +76,8 @@ MENU_ROI = (0, 0, 0, 0)
 SCORE_ROI = (0, 0, 0, 0)
 DAMAGE_DATA_ROI = (0, 0, 0, 0)
 CHARACTER_ICON_ROI = (0, 0, 0, 0)
+DETAIL_REPORT_ROI = (0, 0, 0, 0)
+CROWN_DATA_ROI = (0, 0, 0, 0)
 MENU_LOC = (0, 0)
 
 FRAME_THRESH = 200
@@ -83,7 +93,7 @@ TIMER_SEC = 0
 # 認識判定値
 UB_THRESH = 0.6
 TIMER_THRESH = 0.6
-MENU_THRESH = 0.6
+ITEM_THRESH = 0.6
 DAMAGE_THRESH = 0.65
 ICON_THRESH = 0.6
 
@@ -103,7 +113,11 @@ ERROR_PROCESS_FAILED = 6
 CACHE_NUM = 5
 
 # VIEWとのIF用
-ANALYZE_STATUS = True
+ANALYZE_DO = 0
+ANALYZE_PENDING = 1
+ANALYZE_STOP = 2
+
+ANALYZE_STATUS = ANALYZE_DO
 
 stream_dir = "tmp/"
 if not os.path.exists(stream_dir):
@@ -116,6 +130,10 @@ if not os.path.exists(cache_dir):
 pending_dir = "pending/"
 if not os.path.exists(pending_dir):
     os.mkdir(pending_dir)
+
+result_dir = "result/"
+if not os.path.exists(result_dir):
+    os.mkdir(result_dir)
 
 
 def cache_check(youtube_id):
@@ -176,6 +194,8 @@ def model_init(video_type):
     global SCORE_DATA               # スコアテンプレート
     global DAMAGE_DATA              # ダメージ数値テンプレート
     global ICON_DATA                # アンナアイコンテンプレート
+    global DETAIL_REPORT_DATA       # ダメージレポートテンプレート
+    global CROWN_DATA               # 王冠テンプレート
 
     if video_type is RESOLUTION_16_9:
         CHARACTERS_DATA = np.load("model/16_9/UB_name_16_9.npy")
@@ -184,6 +204,8 @@ def model_init(video_type):
         SCORE_DATA = np.load("model/16_9/score_data_16_9.npy")
         DAMAGE_DATA = np.load("model/16_9/damage_data_16_9.npy")
         ICON_DATA = np.load("model/16_9/icon_data_16_9.npy")
+        DETAIL_REPORT_DATA = np.load("model/16_9/detail_report_16_9.npy")
+        CROWN_DATA = np.load("model/16_9/crown_16_9.npy")
 
     return
 
@@ -198,6 +220,9 @@ def roi_init(video_type):
     global SCORE_ROI             # スコア　解析位置
     global DAMAGE_DATA_ROI       # ダメージ　解析位置
     global CHARACTER_ICON_ROI    # アイコン　解析位置
+    global DETAIL_REPORT_ROI     # ダメージレポート　解析位置
+    global CROWN_DATA_ROI        # 王冠　解析位置
+
     global MENU_LOC              # MENU　ボタン　正位置
     global FRAME_THRESH          # 解析用下限値
     global FRAME_COLS            # 横解像度
@@ -212,6 +237,8 @@ def roi_init(video_type):
         SCORE_ROI = (160, 630, 290, 680)
         DAMAGE_DATA_ROI = (35, 50, 255, 100)
         CHARACTER_ICON_ROI = (234, 506, 1046, 668)
+        DETAIL_REPORT_ROI = (519, 33, 759, 79)
+        CROWN_DATA_ROI = (431, 152, 470, 182)
         MENU_LOC = (63, 23)
         FRAME_THRESH = 200
         FRAME_COLS = 1280
@@ -253,12 +280,16 @@ def search(youtube_id):
 
 
 def analyze_movie(movie_path, self):
-    global ANALYZE_STATUS
-
-    ANALYZE_STATUS = True
-
     # 動画解析し結果をリストで返す
     start_time = tm.time()
+
+    result_name = datetime.datetime.fromtimestamp(start_time)
+    result_name = result_name.strftime('%Y-%m-%d_%H-%M-%S')
+
+    result_file_dir = result_dir + result_name + "/"
+    if not os.path.exists(result_file_dir):
+        os.mkdir(result_file_dir)
+
     # 動画の確認
     video_type = movie_check(movie_path)[1]
 
@@ -285,6 +316,8 @@ def analyze_movie(movie_path, self):
     ub_roi = UB_ROI
     score_roi = SCORE_ROI
     damage_data_roi = DAMAGE_DATA_ROI
+    detail_report_roi = DETAIL_REPORT_ROI
+    crown_data_roi = CROWN_DATA_ROI
 
     ub_data = []
     ub_data_value = []
@@ -302,8 +335,16 @@ def analyze_movie(movie_path, self):
         if ret is False:
             break
 
-        # VIEWからのスレッド停止?
-        if ANALYZE_STATUS is False:
+        # VIEWからのスレッド一時停止
+        if ANALYZE_STATUS is ANALYZE_PENDING:
+            while True:
+                if ANALYZE_STATUS is ANALYZE_PENDING:
+                    tm.sleep(0.2)
+                else:
+                    break
+
+        # VIEWからのスレッド停止
+        if ANALYZE_STATUS is ANALYZE_STOP:
             break
 
         if i % cap_interval is 0:
@@ -315,7 +356,7 @@ def analyze_movie(movie_path, self):
                 work_frame = edit_frame(original_frame)
 
                 if menu_check is False:
-                    menu_check, menu_loc = analyze_menu_frame(work_frame, MENU_DATA, MENU_ROI)
+                    menu_check, menu_loc = analyze_item_frame(work_frame, MENU_DATA, MENU_ROI)
                     if menu_check is True:
                         loc_diff = np.array(MENU_LOC) - np.array(menu_loc)
                         roi_diff = (loc_diff[0], loc_diff[1], loc_diff[0], loc_diff[1])
@@ -325,35 +366,72 @@ def analyze_movie(movie_path, self):
                         ub_roi = np.array(UB_ROI) - np.array(roi_diff)
                         score_roi = np.array(SCORE_ROI) - np.array(roi_diff)
                         damage_data_roi = np.array(DAMAGE_DATA_ROI) - np.array(roi_diff)
+                        detail_report_roi = np.array(DETAIL_REPORT_ROI) - np.array(roi_diff)
+                        crown_data_roi = np.array(CROWN_DATA_ROI) - np.array(roi_diff)
 
                         analyze_anna_icon_frame(work_frame, CHARACTER_ICON_ROI, characters_find)
 
+                        # 検出状況を初期化
+                        tmp_damage = []
+                        total_damage = False
+
+                    elif total_damage is not False:
+                        # ダメージレポート表示中
+                        # 王冠の有無を確認
+                        ret = analyze_item_frame(work_frame, CROWN_DATA, crown_data_roi)[0]
+
+                        if ret is True:
+                            # ダメージレポートの有無を確認
+                            ret = analyze_item_frame(work_frame, DETAIL_REPORT_DATA, detail_report_roi)[0]
+
+                            if ret is True:
+                                # ダメージレポートが開かれている場合
+                                # 検出時の画像をviewに渡す
+                                send_capture_frame(original_frame, self)
+                                save_capture_frame(original_frame, result_file_dir, "damage_report")
+
+                                # 検出状況を初期化
+                                tmp_damage = []
+                                total_damage = False
+
                 else:
+                    # UB 検出処理
+                    # 時間を判定
                     time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
                     time_sec10 = analyze_timer_frame(work_frame, tensec_roi, 6, time_sec10)
                     time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
 
+                    # UB文字を判定
                     ub_result = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
                                                  ub_data, ub_data_value, characters_find, self)
 
                     if ub_result is FOUND:
                         ub_interval = i
                         # 検出時の画像をviewに渡す
-                        capture_frame = cv2.cvtColor(original_frame, cv2.COLOR_BGR2RGB)
-                        view.set_ub_capture(self, capture_frame)
+                        send_capture_frame(original_frame, self)
+                        save_txt(ub_data[-1], result_file_dir)
 
+                    # 総ダメージ検出処理
                     # スコア表示の有無を確認
-                    ret = analyze_score_frame(work_frame, SCORE_DATA, score_roi)
+                    ret = analyze_item_frame(work_frame, SCORE_DATA, score_roi)[0]
 
                     if ret is True:
                         # 総ダメージ解析
                         ret = analyze_damage_frame(original_frame, damage_data_roi, tmp_damage)
 
                         if ret is True:
+                            # 総ダメージ表示が存在の場合
                             total_damage = "総ダメージ " + ''.join(tmp_damage)
                             print(total_damage)
+                            input_txt_damage = "\n\n" + total_damage + "\n"
+                            save_txt(input_txt_damage, result_file_dir)
+                            view.set_ub_text(self, input_txt_damage)
+                            # 検出時の画像をviewに渡す
+                            send_capture_frame(original_frame, self)
+                            save_capture_frame(original_frame, result_file_dir, "total_damage")
 
-                        break
+                            # 検出状況を初期化
+                            menu_check = False
 
     video.release()
 
@@ -392,40 +470,23 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
     tmp_character = [False, 0]
     tmp_value = UB_THRESH
 
-    if len(characters_find) < 5:
-        # 全キャラ探索
-        for j in range(characters_num):
-            result_temp = cv2.matchTemplate(analyze_frame, CHARACTERS_DATA[j], cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result_temp)
-            if max_val > tmp_value:
-                # 前回取得したキャラクターより一致率が高い場合
-                tmp_character = [CHARACTERS[j], j]
-                tmp_value = max_val
-                ub_result = FOUND
+    # 全キャラ探索
+    for j in range(characters_num):
+        result_temp = cv2.matchTemplate(analyze_frame, CHARACTERS_DATA[j], cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result_temp)
+        if max_val > tmp_value:
+            # 前回取得したキャラクターより一致率が高い場合
+            tmp_character = [CHARACTERS[j], j]
+            tmp_value = max_val
+            ub_result = FOUND
 
-        if ub_result is FOUND:
-            # UB データに対する処理
-            ub_data.append(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
-            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
-            ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
-            if tmp_character[1] not in characters_find:
-                characters_find.append(tmp_character[1])
-    else:
-        for j in range(5):
-            # 5キャラのみの探索
-            result_temp = cv2.matchTemplate(analyze_frame, CHARACTERS_DATA[characters_find[j]], cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result_temp)
-            if max_val > tmp_value:
-                # 前回取得したキャラクターより一致率が高い場合
-                tmp_character = [CHARACTERS[characters_find[j]], characters_find[j]]
-                tmp_value = max_val
-                ub_result = FOUND
-
-        if ub_result is FOUND:
-            # UB データに対する処理
-            ub_data.append(time_min + ":" + time_10sec + time_sec + " " + tmp_character[0])
-            view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
-            ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
+    if ub_result is FOUND:
+        # UB データに対する処理
+        ub_data.append(time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
+        view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
+        ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
+        if tmp_character[1] not in characters_find:
+            characters_find.append(tmp_character[1])
 
     return ub_result
 
@@ -447,28 +508,16 @@ def analyze_timer_frame(frame, roi, data_num, time_data):
     return tmp_number
 
 
-def analyze_menu_frame(frame, menu, roi):
-    # menuの有無を確認し開始判定に用いる
+def analyze_item_frame(frame, data, roi):
+    # 単一アイテムの有無を判定 単一の画像モデルの判定に使う
     analyze_frame = frame[roi[1]:roi[3], roi[0]:roi[2]]
 
-    result_temp = cv2.matchTemplate(analyze_frame, menu, cv2.TM_CCOEFF_NORMED)
+    result_temp = cv2.matchTemplate(analyze_frame, data, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result_temp)
-    if max_val > MENU_THRESH:
+    if max_val > ITEM_THRESH:
         return True, max_loc
 
     return False, None
-
-
-def analyze_score_frame(frame, score, roi):
-    # scoreの有無を確認し終了判定に用いる
-    analyze_frame = frame[roi[1]:roi[3], roi[0]:roi[2]]
-
-    result_temp = cv2.matchTemplate(analyze_frame, score, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result_temp)
-    if max_val > MENU_THRESH:
-        return True
-
-    return False
 
 
 def analyze_damage_frame(frame, roi, damage):
@@ -709,10 +758,54 @@ def analyze_transition_check(file_path):
     return file_status, movie_path
 
 
-def set_analyze_status():
+def set_analyze_status_do():
+    # 解析を再開させる
     global ANALYZE_STATUS
 
-    ANALYZE_STATUS = False
+    ANALYZE_STATUS = ANALYZE_DO
+
+
+def set_analyze_status_pending():
+    # 解析を一時停止させる
+    global ANALYZE_STATUS
+
+    ANALYZE_STATUS = ANALYZE_PENDING
+
+
+def set_analyze_status_stop():
+    # 解析を停止させる
+    global ANALYZE_STATUS
+
+    ANALYZE_STATUS = ANALYZE_STOP
+
+
+def send_capture_frame(frame, self):
+    # 検出時の画像をviewに渡す
+    capture_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    view.set_ub_capture(self, capture_frame)
+
+
+def save_capture_frame(frame, path, name):
+    # 検出時の画像を結果として保存する
+    save_name = path + name + ".png"
+    if os.path.exists(save_name):
+        for i in itertools.count(1):
+            save_name = "{}_{}{}".format(path + name, i, ".png")
+
+            if not os.path.exists(save_name):
+                break
+
+    cv2.imwrite(save_name, frame)
+
+
+def save_txt(txt, path):
+    # UBデータをテキストに保存する
+    try:
+        f = open(path + "ub_timeline.txt", "a")
+        f.write(str(txt) + "\n")
+        f.close()
+    except PermissionError:
+        pass
 
 
 if __name__ == "__main__":
