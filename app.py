@@ -119,6 +119,8 @@ ANALYZE_STOP = 2
 
 ANALYZE_STATUS = ANALYZE_DO
 
+RESULT_FILE_DIR = None
+
 stream_dir = "tmp/"
 if not os.path.exists(stream_dir):
     os.mkdir(stream_dir)
@@ -280,6 +282,8 @@ def search(youtube_id):
 
 
 def analyze_movie(movie_path, self):
+    global RESULT_FILE_DIR
+
     # 動画解析し結果をリストで返す
     start_time = tm.time()
 
@@ -290,6 +294,7 @@ def analyze_movie(movie_path, self):
     if not os.path.exists(result_file_dir):
         os.mkdir(result_file_dir)
 
+    RESULT_FILE_DIR = result_file_dir
     # 動画の確認
     video_type = movie_check(movie_path)[1]
 
@@ -421,7 +426,7 @@ def analyze_movie(movie_path, self):
 
                         if ret is True:
                             # 総ダメージ表示が存在の場合
-                            total_damage = "総ダメージ " + ''.join(tmp_damage)
+                            total_damage = "総ダメージ\n" + ''.join(tmp_damage)
                             print(total_damage)
                             input_txt_damage = "\n\n" + total_damage + "\n"
                             save_txt(input_txt_damage, result_file_dir)
@@ -785,6 +790,11 @@ def send_capture_frame(frame, self):
     # 検出時の画像をviewに渡す
     capture_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     view.set_ub_capture(self, capture_frame)
+
+
+def get_result_file_dir():
+    # 結果ファイルのパスを取得
+    return RESULT_FILE_DIR
 
 
 def save_capture_frame(frame, path, name):
