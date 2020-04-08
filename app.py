@@ -427,7 +427,6 @@ def analyze_movie(movie_path, self):
                         if ret is True:
                             # 総ダメージ表示が存在の場合
                             total_damage = "総ダメージ\n" + ''.join(tmp_damage)
-                            print(total_damage)
                             input_txt_damage = "\n\n" + total_damage + "\n"
                             save_txt(input_txt_damage, result_file_dir)
                             view.set_ub_text(self, input_txt_damage)
@@ -445,9 +444,7 @@ def analyze_movie(movie_path, self):
 
     time_result = tm.time() - start_time
     time_data.append("動画時間 : {:.3f}".format(frame_count / frame_rate) + "  sec")
-    print("動画時間 : {:.3f}".format(frame_count / frame_rate) + "  sec")
     time_data.append("処理時間 : {:.3f}".format(time_result) + "  sec")
-    print("処理時間 : {:.3f}".format(time_result) + "  sec")
 
     # VIEWへの終了通知
     if ANALYZE_STATUS is not ANALYZE_STOP:
@@ -725,7 +722,7 @@ def check_input(file_path):
     return False, FILE
 
 
-def analyze_transition_check(file_path):
+def analyze_transition_check(file_path, self):
     status, file_type = check_input(file_path)
 
     movie_path = file_path
@@ -762,7 +759,9 @@ def analyze_transition_check(file_path):
         # 本来ならば到達しないコード
         file_status = ERROR_REQUIRED_PARAM
 
-    return file_status, movie_path
+    view.set_movie_action(self, file_status, movie_path)
+
+    return
 
 
 def set_analyze_status_do():

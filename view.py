@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.filedialog
 import tkinter.scrolledtext
+import TkinterDnD2
 import sys
 import os
 import subprocess
@@ -16,7 +17,15 @@ capture_image = None
 
 app_thread = None
 
+movie_thread = None
+
 analyze_status = True
+
+popup_message_y = 540
+popup_message_active = False
+
+POPUP_MESSAGE_START = 540
+POPUP_MESSAGE_STOP = 518
 
 # main_frame
 BACKGROUND_TOP = "./picture/bg_top.png"
@@ -108,6 +117,25 @@ def set_ub_capture(self, frame):
     self.capture_area_analyze.configure(image=work_img, width=400, height=226)
 
 
+def set_movie_action(self, status, path):
+    # 選択した動画に対する動作を設定する
+    global app_thread
+    global analyze_status
+
+    movie_thread_init()
+    self.after(15, self.update_popup_message_main_down)
+    if status is app.NO_ERROR:
+        self.analyze_frame.tkraise()
+        self.text_box.delete(0, tk.END)
+        self.ub_text_analyze.delete('1.0', tk.END)
+        self.capture_area_analyze.configure(image="")
+        analyze_status = True
+        app_thread_init()
+        app.set_analyze_status_do()
+        app_thread = threading.Thread(target=app.analyze_movie, args=(path, self))
+        app_thread.start()
+
+
 def set_result_frame(self):
     global images
     global capture_image
@@ -119,13 +147,14 @@ def set_result_frame(self):
 
     analyze_status = False
 
-    thread_init()
-
     self.result_frame.tkraise()
 
     # result遷移時に初期化せず、リセット時に使用する
     # self.ub_text_analyze.delete("1.0", tk.END)
     self.capture_area_analyze.configure(image="", width=398, height=112)
+
+    text = "解析完了"
+    self.update_popup_message_result_init(text)
 
 
 def copy_ub_text(self):
@@ -139,7 +168,7 @@ def copy_ub_text(self):
     self.ub_text_result.see("end")
 
 
-def thread_init():
+def app_thread_init():
     global app_thread
 
     if app_thread:
@@ -148,10 +177,19 @@ def thread_init():
         app_thread = None
 
 
+def movie_thread_init():
+    global movie_thread
+
+    if movie_thread:
+        movie_thread.join()
+        movie_thread = None
+
+
 def home_init(self):
     global images
     global capture_image
     global analyze_status
+    global popup_message_active
 
     self.main_frame.tkraise()
     self.text_box.delete(0, tk.END)
@@ -163,7 +201,12 @@ def home_init(self):
     capture_image = None
     analyze_status = True
 
-    thread_init()
+    popup_message_active = False
+    self.popup_message_main.place_forget()
+    self.popup_message_result.place_forget()
+
+    app_thread_init()
+    movie_thread_init()
 
 
 class Frame(tk.Tk):
@@ -202,7 +245,7 @@ class Frame(tk.Tk):
         self.header_bt_home_main.place(x=0, y=0)
 
         # 入力フォームを設定 (layer:3)
-        self.text_box = tk.Entry(self.main_frame, width=38, fg="#a0a0a0", bg="#FFFFFF",
+        self.text_box = tk.Entry(self.main_frame, width=38, fg="#A0A0A0", bg="#FFFFFF",
                                  bd=5, font=("Yu Gothic UI", 12), relief="flat")
         self.text_box.place(x=267, y=278)
 
@@ -222,25 +265,10 @@ class Frame(tk.Tk):
         self.bt_start.bind("<ButtonRelease-1>", self.bt_start_push)
         self.bt_start.place(x=444, y=347)
 
-        """
-        # ---------------------選択画面の設定---------------------
-        self.select = tk.Frame()
-        self.select.grid(row=0, column=0, sticky=tk.W)
-        # 背景を設定(layer:0)
-        self.bg = tk.Label(self.select, image=imgs[NUM_BACKGROUND_DRAG], bd=0)
-        self.bg.pack(fill="x")
-
-        # ヘッダーを設定 (layer:1)
-        self.header = tk.Label(self.select, width=960, height=0, bg="#272727", font=("", 18))
-        self.header.place(x=0, y=0)
-
-        # Homeボタンを設定 (layer:2)
-        self.header_bt_home_2 = tk.Label(self.select, image=imgs[NUM_BUTTON_HOME], width=95, height=26, bg="#272727")
-        self.header_bt_home_2.bind("<Leave>", self.bt_home_nm)
-        self.header_bt_home_2.bind("<Enter>", self.bt_home_select)
-        self.header_bt_home_2.bind("<ButtonRelease-1>", self.bt_change_to_home)
-        self.header_bt_home_2.place(x=0, y=0)
-        """
+        # ポップアップメッセージを設定 (layer:top)
+        self.popup_message_main = tk.Label(self.main_frame, image="", width=18, height=1, fg="#E2E2E2",
+                                             bg="#323232", bd=0, font=("メイリオ", 10), text="")
+        self.popup_message_main.place(x=0, y=540)
         
         # ---------------------解析画面の設定---------------------
         self.analyze_frame = tk.Frame()
@@ -292,22 +320,22 @@ class Frame(tk.Tk):
 
         # UB入力欄背景1を設定 (layer:7)
         self.ub_area_analyze_bg1 = tk.Label(self.analyze_frame, image="",
-                                            width=332, height=187, bg="#d4edf4", font=("", 1), bd=0)
+                                            width=332, height=187, bg="#D4EDF4", font=("", 1), bd=0)
         self.ub_area_analyze_bg1.place(x=555, y=75)
 
         # UB入力欄背景2を設定 (layer:8)
         self.ub_area_analyze_bg2 = tk.Label(self.analyze_frame, image="",
-                                            width=0, height=187, bg="#ffffff", font=("", 1), bd=0)
+                                            width=0, height=187, bg="#FFFFFF", font=("", 1), bd=0)
         self.ub_area_analyze_bg2.place(x=872, y=75)
 
         # UB入力欄背景3を設定 (layer:9)
         self.ub_area_analyze_bg3 = tk.Label(self.analyze_frame, image="",
-                                            width=14, height=187, bg="#f0f0f0", font=("", 1), bd=0)
+                                            width=14, height=187, bg="#F0F0F0", font=("", 1), bd=0)
         self.ub_area_analyze_bg3.place(x=873, y=75)
 
         # UB入力欄を設定 (layer:10)
-        self.ub_text_analyze = tk.scrolledtext.ScrolledText(self.analyze_frame, width=34, height=16,
-                                                            fg="#4d4d4d", bg="#d4edf4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text_analyze = tk.scrolledtext.ScrolledText(self.analyze_frame, width=34, height=16, fg="#4D4D4D",
+                                                            bg="#D4EDF4", bd=0, font=("メイリオ", 11), relief="flat")
         self.ub_text_analyze.place(x=564, y=79)
 
         # ---------------------結果画面の設定---------------------
@@ -368,46 +396,28 @@ class Frame(tk.Tk):
 
         # UB入力欄背景1を設定 (layer:8)
         self.ub_area_result_bg1 = tk.Label(self.result_frame, image="",
-                                           width=332, height=187, bg="#d4edf4", font=("", 1), bd=0)
+                                           width=332, height=187, bg="#D4EDF4", font=("", 1), bd=0)
         self.ub_area_result_bg1.place(x=555, y=75)
 
         # UB入力欄背景2を設定 (layer:9)
         self.ub_area_result_bg2 = tk.Label(self.result_frame, image="",
-                                           width=0, height=187, bg="#ffffff", font=("", 1), bd=0)
+                                           width=0, height=187, bg="#FFFFFF", font=("", 1), bd=0)
         self.ub_area_result_bg2.place(x=872, y=75)
 
         # UB入力欄背景3を設定 (layer:10)
         self.ub_area_result_bg3 = tk.Label(self.result_frame, image="",
-                                           width=14, height=187, bg="#f0f0f0", font=("", 1), bd=0)
+                                           width=14, height=187, bg="#F0F0F0", font=("", 1), bd=0)
         self.ub_area_result_bg3.place(x=873, y=75)
 
         # UB入力欄を設定 (layer:11)
-        self.ub_text_result = tk.scrolledtext.ScrolledText(self.result_frame, width=34, height=16, fg="#4d4d4d",
-                                                           bg="#d4edf4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text_result = tk.scrolledtext.ScrolledText(self.result_frame, width=34, height=16, fg="#4D4D4D",
+                                                           bg="#D4EDF4", bd=0, font=("メイリオ", 11), relief="flat")
         self.ub_text_result.place(x=564, y=79)
 
-        """
-        # 入力フォームを設定 (layer:3)
-        self.text_box = tk.Entry(self.analyze_frame, width=38, fg="#a0a0a0", bg="#FFFFFF",
-                                 bd=5, font=("Yu Gothic UI", 12), relief="flat")
-        self.text_box.place(x=267, y=278)
-
-        # SELECTボタン設定 (layer:4)
-        self.bt_select = tk.Label(self.analyze_frame, image=imgs[NUM_BUTTON_SELECT],
-                                  width=72, height=33, bg="#94DADE", bd=0)
-        self.bt_select.bind("<Leave>", self.bt_select_nm)
-        self.bt_select.bind("<Enter>", self.bt_select_nm_select)
-        self.bt_select.bind("<ButtonRelease-1>", self.bt_select_push)
-        self.bt_select.place(x=621, y=278)
-
-        # STARTボタン設定 (layer:5)
-        self.bt_start = tk.Label(self.analyze_frame, image=imgs[NUM_BUTTON_START],
-                                 width=72, height=33, bg="#94DADE", bd=0)
-        self.bt_start.bind("<Leave>", self.bt_start_nm)
-        self.bt_start.bind("<Enter>", self.bt_start_nm_select)
-        self.bt_start.bind("<ButtonRelease-1>", self.bt_start_push)
-        self.bt_start.place(x=444, y=347)
-        """
+        # ポップアップメッセージを設定 (layer:top)
+        self.popup_message_result = tk.Label(self.result_frame, image="", width=18, height=1, fg="#E2E2E2",
+                                             bg="#323232", bd=0, font=("メイリオ", 10), text="")
+        self.popup_message_result.place(x=0, y=540)
 
         # 初期化
         home_init(self)
@@ -435,7 +445,7 @@ class Frame(tk.Tk):
         self.bt_select.configure(image=images[NUM_BUTTON_SELECT], bg="#94DADE", cursor="arrow")
 
     def bt_select_select(self, event):
-        self.bt_select.configure(image=images[NUM_BUTTON_SELECT_2], bg="#599ea2", cursor="hand2")
+        self.bt_select.configure(image=images[NUM_BUTTON_SELECT_2], bg="#599EA2", cursor="hand2")
 
     def bt_select_push(self, event):
         global FILE_DIR
@@ -456,26 +466,63 @@ class Frame(tk.Tk):
         self.bt_start.configure(image=images[NUM_BUTTON_START], bg="#94DADE", cursor="arrow")
 
     def bt_start_select(self, event):
-        self.bt_start.configure(image=images[NUM_BUTTON_START_2], bg="#599ea2", cursor="hand2")
+        self.bt_start.configure(image=images[NUM_BUTTON_START_2], bg="#599EA2", cursor="hand2")
 
     def bt_start_push(self, event):
-        global app_thread
+        global movie_thread
         global analyze_status
 
         input_text = self.text_box.get()
         file_path = input_text.strip()
-        file_status, movie_path = app.analyze_transition_check(file_path)
+        movie_thread_init()
+        movie_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
+        movie_thread.start()
 
-        if file_status is app.NO_ERROR:
-            self.analyze_frame.tkraise()
-            self.text_box.delete(0, tk.END)
-            self.ub_text_analyze.delete('1.0', tk.END)
-            self.capture_area_analyze.configure(image="")
-            analyze_status = True
-            thread_init()
-            app.set_analyze_status_do()
-            app_thread = threading.Thread(target=app.analyze_movie, args=(movie_path, self))
-            app_thread.start()
+        text = "動画取得中..."
+        self.update_popup_message_main_init(text)
+
+    # ポップアップメッセージ用 (layer:top)
+    def update_popup_message_main_init(self, text):
+        global popup_message_y
+        global popup_message_active
+
+        if popup_message_active is False:
+            popup_message_active = True
+            popup_message_y = POPUP_MESSAGE_START
+            self.popup_message_main.configure(text=text)
+            self.popup_message_main.place(x=0, y=popup_message_y)
+            self.after(10, self.update_popup_message_main_up)
+
+    def update_popup_message_main_up(self):
+        global popup_message_y
+
+        if popup_message_active is True:
+            if popup_message_y > POPUP_MESSAGE_STOP:
+                popup_message_y -= 1
+                self.popup_message_main.place(x=0, y=popup_message_y)
+                self.after(10, self.update_popup_message_main_up)
+            else:
+                # 上昇完了
+                # set_movie_actionで下降する
+                pass
+        else:
+            self.popup_message_main.place_forget()
+
+    def update_popup_message_main_down(self):
+        global popup_message_y
+        global popup_message_active
+
+        if popup_message_active is True:
+            if popup_message_y < POPUP_MESSAGE_START:
+                popup_message_y += 1
+                self.popup_message_main.place(x=0, y=popup_message_y)
+                self.after(15, self.update_popup_message_main_down)
+            else:
+                # 下降完了
+                self.popup_message_main.place_forget()
+                popup_message_active = False
+        else:
+            self.popup_message_main.place_forget()
 
     # ---------------------解析画面(layer:3~)の設定---------------------
     # ボディHomeボタン用イベント (layer:3)
@@ -551,6 +598,9 @@ class Frame(tk.Tk):
     def body_bt_reset_result_push(self, event):
         copy_ub_text(self)
 
+        text = "TLを初期化しました"
+        self.update_popup_message_result_init(text)
+
     # ボディCOPYボタン用イベント (layer:5)
     def body_bt_copy_result_nm(self, event):
         self.body_bt_copy_result.configure(bg="#484848", cursor="arrow")
@@ -561,6 +611,9 @@ class Frame(tk.Tk):
     def body_bt_copy_result_push(self, event):
         result_txt = self.ub_text_result.get("1.0", tk.END)
         self.clipboard_append(result_txt)
+
+        text = "コピーしました"
+        self.update_popup_message_result_init(text)
 
     # 画像エリア用イベント (layer:6)
     def capture_area_result_nm(self, event):
@@ -573,8 +626,50 @@ class Frame(tk.Tk):
         result_path = app.get_result_file_dir()
         subprocess.run('explorer {}'.format(result_path.replace("/", "\\")))
 
+    # ポップアップメッセージ用 (layer:top)
+    def update_popup_message_result_init(self, text):
+        global popup_message_y
+        global popup_message_active
+
+        if popup_message_active is False:
+            popup_message_active = True
+            popup_message_y = POPUP_MESSAGE_START
+            self.popup_message_result.configure(text=text)
+            self.popup_message_result.place(x=0, y=popup_message_y)
+            self.after(10, self.update_popup_message_result_up)
+
+    def update_popup_message_result_up(self):
+        global popup_message_y
+
+        if popup_message_active is True:
+            if popup_message_y > POPUP_MESSAGE_STOP:
+                popup_message_y -= 1
+                self.popup_message_result.place(x=0, y=popup_message_y)
+                self.after(10, self.update_popup_message_result_up)
+            else:
+                # 上昇完了
+                self.after(2000, self.update_popup_message_result_down)
+        else:
+            self.popup_message_result.place_forget()
+
+    def update_popup_message_result_down(self):
+        global popup_message_y
+        global popup_message_active
+
+        if popup_message_active is True:
+            if popup_message_y < POPUP_MESSAGE_START:
+                popup_message_y += 1
+                self.popup_message_result.place(x=0, y=popup_message_y)
+                self.after(15, self.update_popup_message_result_down)
+            else:
+                # 下降完了
+                self.popup_message_result.place_forget()
+                popup_message_active = False
+        else:
+            self.popup_message_result.place_forget()
+
 
 if __name__ == "__main__":
     f = Frame()
     f.mainloop()
-    thread_init()
+    app_thread_init()
