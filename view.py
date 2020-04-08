@@ -17,8 +17,6 @@ capture_image = None
 
 app_thread = None
 
-movie_thread = None
-
 analyze_status = True
 
 popup_message_y = 540
@@ -122,7 +120,7 @@ def set_movie_action(self, status, path):
     global app_thread
     global analyze_status
 
-    movie_thread_init()
+    app_thread_init()
     self.after(15, self.update_popup_message_main_down)
     if status is app.NO_ERROR:
         self.analyze_frame.tkraise()
@@ -130,7 +128,6 @@ def set_movie_action(self, status, path):
         self.ub_text_analyze.delete('1.0', tk.END)
         self.capture_area_analyze.configure(image="")
         analyze_status = True
-        app_thread_init()
         app.set_analyze_status_do()
         app_thread = threading.Thread(target=app.analyze_movie, args=(path, self))
         app_thread.start()
@@ -177,14 +174,6 @@ def app_thread_init():
         app_thread = None
 
 
-def movie_thread_init():
-    global movie_thread
-
-    if movie_thread:
-        movie_thread.join()
-        movie_thread = None
-
-
 def home_init(self):
     global images
     global capture_image
@@ -206,7 +195,6 @@ def home_init(self):
     self.popup_message_result.place_forget()
 
     app_thread_init()
-    movie_thread_init()
 
 
 class Frame(tk.Tk):
@@ -469,14 +457,14 @@ class Frame(tk.Tk):
         self.bt_start.configure(image=images[NUM_BUTTON_START_2], bg="#599EA2", cursor="hand2")
 
     def bt_start_push(self, event):
-        global movie_thread
+        global app_thread
         global analyze_status
 
         input_text = self.text_box.get()
         file_path = input_text.strip()
-        movie_thread_init()
-        movie_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
-        movie_thread.start()
+        app_thread_init()
+        app_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
+        app_thread.start()
 
         text = "動画取得中..."
         self.update_popup_message_main_init(text)
