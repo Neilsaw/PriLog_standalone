@@ -115,7 +115,7 @@ def set_ub_capture(self, frame):
     self.capture_area_analyze.configure(image=work_img, width=400, height=226)
 
 
-def set_movie_action(self, status, path):
+def set_movie_action(self, status, path, ftype):
     # 選択した動画に対する動作を設定する
     global app_thread
     global analyze_status
@@ -129,7 +129,7 @@ def set_movie_action(self, status, path):
         self.capture_area_analyze.configure(image="")
         analyze_status = True
         app.set_analyze_status_do()
-        app_thread = threading.Thread(target=app.analyze_movie, args=(path, self))
+        app_thread = threading.Thread(target=app.analyze_movie, args=(path, ftype, self))
         app_thread.start()
 
 
@@ -170,7 +170,7 @@ def app_thread_init():
 
     if app_thread:
         app.set_analyze_status_stop()
-        app_thread.join()
+        app.set_movie_status_stop()
         app_thread = None
 
 
@@ -462,6 +462,7 @@ class Frame(tk.Tk):
 
         input_text = self.text_box.get()
         file_path = input_text.strip()
+        app.set_movie_status_do()
         app_thread_init()
         app_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
         app_thread.start()
@@ -598,6 +599,7 @@ class Frame(tk.Tk):
 
     def body_bt_copy_result_push(self, event):
         result_txt = self.ub_text_result.get("1.0", tk.END)
+        self.clipboard_clear()
         self.clipboard_append(result_txt)
 
         text = "コピーしました"

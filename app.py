@@ -7,12 +7,10 @@ from pytube import exceptions
 import time as tm
 import datetime
 import cv2
-import json
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
 import sys
-import urllib.parse
 import itertools
 import characters as cd
 import after_caluculation as ac
@@ -117,7 +115,12 @@ ANALYZE_DO = 0
 ANALYZE_PENDING = 1
 ANALYZE_STOP = 2
 
+# VIEWとのIF用
+MOVIE_DO = 0
+MOVIE_STOP = 1
+
 ANALYZE_STATUS = ANALYZE_DO
+MOVIE_GET_STATUS = MOVIE_DO
 
 RESULT_FILE_DIR = None
 
@@ -125,45 +128,9 @@ stream_dir = "tmp/"
 if not os.path.exists(stream_dir):
     os.mkdir(stream_dir)
 
-cache_dir = "cache/"
-if not os.path.exists(cache_dir):
-    os.mkdir(cache_dir)
-
-pending_dir = "pending/"
-if not os.path.exists(pending_dir):
-    os.mkdir(pending_dir)
-
 result_dir = "result/"
 if not os.path.exists(result_dir):
     os.mkdir(result_dir)
-
-
-def cache_check(youtube_id):
-    # キャッシュ有無の確認
-    try:
-        cache_path = cache_dir + urllib.parse.quote(youtube_id) + '.json'
-        ret = json.load(open(cache_path))
-        if len(ret) is CACHE_NUM:
-            # キャッシュから取得した値の数が規定値
-            return ret
-        else:
-            # 異常なキャッシュの場合
-            clear_path(cache_path)
-            return False
-
-    except FileNotFoundError:
-        return False
-
-
-def pending_append(path):
-    # 解析中のIDを保存
-    try:
-        with open(path, mode='w'):
-            pass
-    except FileExistsError:
-        pass
-
-    return
 
 
 def clear_path(path):
@@ -281,7 +248,7 @@ def search(youtube_id):
     return movie_path, movie_title, NO_ERROR
 
 
-def analyze_movie(movie_path, self):
+def analyze_movie(movie_path, file_type, self):
     global RESULT_FILE_DIR
 
     # 動画解析し結果をリストで返す
@@ -445,6 +412,10 @@ def analyze_movie(movie_path, self):
     time_result = tm.time() - start_time
     time_data.append("動画時間 : {:.3f}".format(frame_count / frame_rate) + "  sec")
     time_data.append("処理時間 : {:.3f}".format(time_result) + "  sec")
+
+    # YOUTUBEから取得した動画の場合削除
+    if file_type is YOUTUBE:
+        clear_path(movie_path)
 
     # VIEWへの終了通知
     if ANALYZE_STATUS is not ANALYZE_STOP:
@@ -759,7 +730,14 @@ def analyze_transition_check(file_path, self):
         # 本来ならば到達しないコード
         file_status = ERROR_REQUIRED_PARAM
 
-    view.set_movie_action(self, file_status, movie_path)
+    if MOVIE_GET_STATUS is MOVIE_DO:
+        # 動画取得継続
+        view.set_movie_action(self, file_status, movie_path, file_type)
+    else:
+        # 動画取得終了
+        if file_type is YOUTUBE:
+            # YOUTUBEから取得した動画の場合
+            clear_path(movie_path)
 
     return
 
@@ -794,6 +772,18 @@ def send_capture_frame(frame, self):
 def get_result_file_dir():
     # 結果ファイルのパスを取得
     return RESULT_FILE_DIR
+
+
+def set_movie_status_do():
+    global MOVIE_GET_STATUS
+
+    MOVIE_GET_STATUS = MOVIE_DO
+
+
+def set_movie_status_stop():
+    global MOVIE_GET_STATUS
+
+    MOVIE_GET_STATUS = MOVIE_STOP
 
 
 def save_capture_frame(frame, path, name):
