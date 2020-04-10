@@ -706,6 +706,7 @@ def analyze_transition_check(file_path, self):
 
         elif file_type is YOUTUBE:
             # Youtubeの場合の画面遷移
+            view.set_waiting_movie(self)
             movie_path, movie_name, file_status = search(file_path)
 
         else:

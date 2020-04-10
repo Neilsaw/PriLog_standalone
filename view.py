@@ -1,7 +1,6 @@
 import tkinter as tk
 import tkinter.filedialog
 import tkinter.scrolledtext
-import TkinterDnD2
 import sys
 import os
 import subprocess
@@ -96,8 +95,9 @@ NUM_BUTTON_COPY = 13
 FILE_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 
-def change_page(page):
-    page.tkraise()
+def set_waiting_movie(self):
+    text = "動画取得中..."
+    self.update_popup_message_main_init(text)
 
 
 def set_ub_text(self, input_text):
@@ -462,13 +462,10 @@ class Frame(tk.Tk):
 
         input_text = self.text_box.get()
         file_path = input_text.strip()
-        app.set_movie_status_do()
         app_thread_init()
+        app.set_movie_status_do()
         app_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
         app_thread.start()
-
-        text = "動画取得中..."
-        self.update_popup_message_main_init(text)
 
     # ポップアップメッセージ用 (layer:top)
     def update_popup_message_main_init(self, text):
