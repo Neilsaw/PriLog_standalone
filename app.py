@@ -232,9 +232,8 @@ def search(youtube_id):
     except:
         return None, None, ERROR_CANT_GET_MOVIE
 
-    movie_thumbnail = yt.thumbnail_url
     movie_length = yt.length
-    if int(movie_length) > 480:
+    if int(movie_length) > 600:
         return None, None, ERROR_TOO_LONG
 
     stream = yt.streams.get_by_itag("22")
