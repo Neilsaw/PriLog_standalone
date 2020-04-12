@@ -106,6 +106,7 @@ ERROR_NOT_SUPPORTED = 3
 ERROR_CANT_GET_MOVIE = 4
 ERROR_REQUIRED_PARAM = 5
 ERROR_PROCESS_FAILED = 6
+ERROR_NOT_HD = 7
 
 # キャッシュ格納数
 CACHE_NUM = 5
@@ -114,6 +115,7 @@ CACHE_NUM = 5
 ANALYZE_DO = 0
 ANALYZE_PENDING = 1
 ANALYZE_STOP = 2
+ANALYZE_END = 3
 
 # VIEWとのIF用
 MOVIE_DO = 0
@@ -238,13 +240,15 @@ def search(youtube_id):
 
     stream = yt.streams.get_by_itag("22")
     if stream is None:
-        return None, None, ERROR_NOT_SUPPORTED
+        return None, None, ERROR_NOT_HD
 
     movie_title = stream.title
     movie_name = tm.time()
     movie_path = stream.download(stream_dir, str(movie_name))
 
-    return movie_path, movie_title, NO_ERROR
+    file_status = movie_check(movie_path)[0]
+
+    return movie_path, movie_title, file_status
 
 
 def analyze_movie(movie_path, file_type, self):
@@ -316,6 +320,10 @@ def analyze_movie(movie_path, file_type, self):
 
         # VIEWからのスレッド停止
         if ANALYZE_STATUS is ANALYZE_STOP:
+            break
+
+        # VIEWからのスレッド途中完了
+        if ANALYZE_STATUS is ANALYZE_END:
             break
 
         if i % cap_interval is 0:
@@ -667,13 +675,13 @@ def movie_check(movie_path):
     return NO_ERROR, video_type
 
 
-def check_input(file_path):
+def input_check(file_path):
     file_exist = os.path.exists(file_path)
 
     if file_exist is True:
         # FILE
         ext = os.path.splitext(file_path)[1]
-        if ext == ".mp4":
+        if ext == ".mp4" or ext == ".MP4":
             # 拡張子がmp4
             return True, FILE
 
@@ -692,10 +700,49 @@ def check_input(file_path):
     return False, FILE
 
 
+def set_error_message(file_type, status):
+    e_code = "[Error-U]"
+    e_message = "予期せぬエラー"
+
+    if file_type is FILE:
+
+        if status is ERROR_TOO_LONG:
+            e_code = "[Error-F2]"
+            e_message = "動画時間が長いため解析できません\n現在の設定では10分未満に対応しております(設定で変更できます)"
+        elif status is ERROR_NOT_SUPPORTED:
+            e_code = "[Error-F3]"
+            e_message = "申し訳ありません　動画の解像度に対応しておりません\n16:9の解像度の動画をご用意頂けますと解析できます"
+        elif status is ERROR_CANT_GET_MOVIE:
+            e_code = "[Error-F4]"
+            e_message = ".mp4動画を選択できていないようです\nフォルダアイコンから選んでみてください"
+    elif file_type is YOUTUBE:
+
+        if status is ERROR_BAD_URL:
+            e_code = "[Error-Y1]"
+            e_message = "YouTubeの動画を見つけることができませんでした\nURLをYouTubeの共有よりコピーしてみてください"
+        elif status is ERROR_TOO_LONG:
+            e_code = "[Error-Y2]"
+            e_message = "動画時間が長いため解析できません\n現在の設定では10分未満に対応しております(設定で変更できます)"
+        elif status is ERROR_NOT_SUPPORTED:
+            e_code = "[Error-Y3]"
+            e_message = "申し訳ありません　動画の解像度に対応しておりません\n16:9の解像度以外の動画は今後対応致します"
+        elif status is ERROR_CANT_GET_MOVIE:
+            e_code = "[Error-Y4]"
+            e_message = "HD画質(720p)の動画を取得できませんでした\n繰り返し発生する場合は解析できません　申し訳ありません"
+        elif status is ERROR_NOT_HD:
+            e_code = "[Error-Y7]"
+            e_message = "HD画質(720p)の動画を取得できませんでした\n繰り返し発生する場合は解析できません　申し訳ありません"
+
+    error_message = e_code + "\n" + e_message
+
+    return error_message
+
+
 def analyze_transition_check(file_path, self):
-    status, file_type = check_input(file_path)
+    status, file_type = input_check(file_path)
 
     movie_path = file_path
+    error_message = ""
 
     if status is True:
         # 入力正常時
@@ -730,9 +777,12 @@ def analyze_transition_check(file_path, self):
         # 本来ならば到達しないコード
         file_status = ERROR_REQUIRED_PARAM
 
+    if file_status is not NO_ERROR:
+        error_message = set_error_message(file_type, file_status)
+
     if MOVIE_GET_STATUS is MOVIE_DO:
         # 動画取得継続
-        view.set_movie_action(self, file_status, movie_path, file_type)
+        view.set_movie_action(self, file_status, movie_path, file_type, error_message)
     else:
         # 動画取得終了
         if file_type is YOUTUBE:
@@ -761,6 +811,13 @@ def set_analyze_status_stop():
     global ANALYZE_STATUS
 
     ANALYZE_STATUS = ANALYZE_STOP
+
+
+def set_analyze_status_end():
+    # 解析を途中完了させる
+    global ANALYZE_STATUS
+
+    ANALYZE_STATUS = ANALYZE_END
 
 
 def send_capture_frame(frame, self):
