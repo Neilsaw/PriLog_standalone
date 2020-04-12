@@ -17,6 +17,7 @@ capture_image = None
 app_thread = None
 
 analyze_status = True
+setting_status = False
 
 popup_message_y = 540
 popup_message_active = False
@@ -52,6 +53,9 @@ BUTTON_END_2 = "./picture/end_button_2.png"
 BUTTON_RESET = "./picture/reset_button.png"
 BUTTON_COPY = "./picture/copy_button.png"
 
+# setting_menu
+BASE_SETTING = "./picture/setting_base.png"
+
 PICTURE_PATH = [
     BACKGROUND_TOP,
     BUTTON_HOME,
@@ -71,6 +75,7 @@ PICTURE_PATH = [
     BUTTON_END_2,
     BUTTON_RESET,
     BUTTON_COPY,
+    BASE_SETTING,
 ]
 
 # main_frame
@@ -100,6 +105,9 @@ NUM_BUTTON_END_2 = 14
 # reset_frame
 NUM_BUTTON_RESET = 15
 NUM_BUTTON_COPY = 16
+
+# setting_menu
+NUM_BASE_SETTING = 17
 
 FILE_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
 
@@ -189,6 +197,7 @@ def home_init(self):
     global images
     global capture_image
     global analyze_status
+    global setting_status
     global popup_message_active
 
     self.main_frame.tkraise()
@@ -200,11 +209,12 @@ def home_init(self):
 
     capture_image = None
     analyze_status = True
+    setting_status = False
 
     popup_message_active = False
     self.popup_message_main.place_forget()
     self.popup_message_result.place_forget()
-    self.clear_focus(self)
+    self.clear_view_parts(self)
 
     self.error_message_main.configure(text="")
     self.clear_error_message()
@@ -233,12 +243,12 @@ class Frame(tk.Tk):
         self.main_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
         self.bg = tk.Label(self.main_frame, image=images[NUM_BACKGROUND_TOP], bd=0)
-        self.bg.bind("<ButtonRelease-1>", self.clear_focus)         # フォーカス初期化
+        self.bg.bind("<ButtonRelease-1>", self.clear_view_parts)         # フォーカス/設定画面初期化
         self.bg.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
         self.header = tk.Label(self.main_frame, width=960, height=0, bg="#272727", font=("", 18))
-        self.header.bind("<ButtonRelease-1>", self.clear_focus)         # フォーカス初期化
+        self.header.bind("<ButtonRelease-1>", self.clear_view_parts)         # フォーカス/設定画面初期化
         self.header.place(x=0, y=0)
 
         # ヘッダーHomeボタンを設定 (layer:2)
@@ -251,15 +261,16 @@ class Frame(tk.Tk):
 
         # ヘッダー設定ボタンを設定 (layer:3)
         self.header_bt_setting_main = tk.Label(self.main_frame, image=images[NUM_BUTTON_SETTING],
-                                            width=70, height=26, bg="#272727")
+                                            width=95, height=26, bg="#272727")
         self.header_bt_setting_main.bind("<Leave>", self.header_bt_setting_nm)
         self.header_bt_setting_main.bind("<Enter>", self.header_bt_setting_select)
         self.header_bt_setting_main.bind("<ButtonRelease-1>", self.header_bt_setting_push)
-        self.header_bt_setting_main.place(x=886, y=0)
+        self.header_bt_setting_main.place(x=100, y=0)
 
         # 入力フォームを設定 (layer:4)
         self.text_box = tk.Entry(self.main_frame, width=38, fg="#A0A0A0", bg="#FFFFFF",
                                  bd=5, font=("Yu Gothic UI", 12), relief="flat")
+        self.text_box.bind("<ButtonRelease-1>", self.clear_setting)         # 設定画面初期化
         self.text_box.place(x=267, y=278)
 
         # エラーメッセージフォームを設定 (layer:5)
@@ -284,8 +295,14 @@ class Frame(tk.Tk):
         # ポップアップメッセージを設定 (layer:top)
         self.popup_message_main = tk.Label(self.main_frame, image="", width=18, height=1, fg="#E2E2E2",
                                              bg="#323232", bd=0, font=("メイリオ", 10), text="")
-        self.popup_message_main.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.popup_message_main.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.popup_message_main.place(x=0, y=540)
+
+        # 設定画面を設定 (layer:top)
+        self.setting_menu_main = tk.Label(self.main_frame, image=images[NUM_BASE_SETTING], width=267, height=510,
+                                          bg="#272727", bd=0, font=("メイリオ", 10), text="")
+        self.setting_menu_main.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.setting_menu_main.place(x=-267, y=30)
 
         # フォーカス解除用ダミーを設定 (layer:None)
         self.focus_dummy = tk.Label(self.main_frame)
@@ -296,12 +313,12 @@ class Frame(tk.Tk):
         self.analyze_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
         self.bg = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
-        self.bg.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.bg.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.bg.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
         self.header = tk.Label(self.analyze_frame, width=960, height=0, bg="#272727", font=("", 18))
-        self.header.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.header.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.header.place(x=0, y=0)
 
         # ヘッダーHomeボタンを設定 (layer:2)
@@ -355,30 +372,31 @@ class Frame(tk.Tk):
         # UBテキストエリアを設定 (layer:8)
         self.ub_area_analyze = tk.Label(self.analyze_frame, image="",
                                         width=363, height=202, bg="#272727", font=("", 1), bd=0)
-        self.ub_area_analyze.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_analyze.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_analyze.place(x=538, y=59)
 
         # UB入力欄背景1を設定 (layer:9)
         self.ub_area_analyze_bg1 = tk.Label(self.analyze_frame, image="",
                                             width=332, height=187, bg="#D4EDF4", font=("", 1), bd=0)
-        self.ub_area_analyze_bg1.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_analyze_bg1.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_analyze_bg1.place(x=555, y=75)
 
         # UB入力欄背景2を設定 (layer:10)
         self.ub_area_analyze_bg2 = tk.Label(self.analyze_frame, image="",
                                             width=0, height=187, bg="#FFFFFF", font=("", 1), bd=0)
-        self.ub_area_analyze_bg2.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_analyze_bg2.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_analyze_bg2.place(x=872, y=75)
 
         # UB入力欄背景3を設定 (layer:11)
         self.ub_area_analyze_bg3 = tk.Label(self.analyze_frame, image="",
                                             width=14, height=187, bg="#F0F0F0", font=("", 1), bd=0)
-        self.ub_area_analyze_bg3.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_analyze_bg3.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_analyze_bg3.place(x=873, y=75)
 
         # UB入力欄を設定 (layer:12)
         self.ub_text_analyze = tk.scrolledtext.ScrolledText(self.analyze_frame, width=34, height=16, fg="#4D4D4D",
                                                             bg="#D4EDF4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text_analyze.bind("<ButtonRelease-1>", self.clear_setting)  # 設定画面初期化
         self.ub_text_analyze.place(x=564, y=79)
 
         # ---------------------結果画面の設定---------------------
@@ -386,12 +404,12 @@ class Frame(tk.Tk):
         self.result_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
         self.bg = tk.Label(self.result_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
-        self.bg.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.bg.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.bg.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
         self.header = tk.Label(self.result_frame, width=960, height=0, bg="#272727", font=("", 18))
-        self.header.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.header.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.header.place(x=0, y=0)
 
         # ヘッダーHomeボタンを設定 (layer:2)
@@ -445,36 +463,37 @@ class Frame(tk.Tk):
         # UBテキストエリアを設定 (layer:8)
         self.ub_area_result = tk.Label(self.result_frame, image="",
                                        width=363, height=202, bg="#272727", font=("", 1), bd=0)
-        self.ub_area_result.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_result.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_result.place(x=538, y=59)
 
         # UB入力欄背景1を設定 (layer:9)
         self.ub_area_result_bg1 = tk.Label(self.result_frame, image="",
                                            width=332, height=187, bg="#D4EDF4", font=("", 1), bd=0)
-        self.ub_area_result_bg1.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_result_bg1.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_result_bg1.place(x=555, y=75)
 
         # UB入力欄背景2を設定 (layer:10)
         self.ub_area_result_bg2 = tk.Label(self.result_frame, image="",
                                            width=0, height=187, bg="#FFFFFF", font=("", 1), bd=0)
-        self.ub_area_result_bg2.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_result_bg2.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_result_bg2.place(x=872, y=75)
 
         # UB入力欄背景3を設定 (layer:11)
         self.ub_area_result_bg3 = tk.Label(self.result_frame, image="",
                                            width=14, height=187, bg="#F0F0F0", font=("", 1), bd=0)
-        self.ub_area_result_bg3.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.ub_area_result_bg3.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.ub_area_result_bg3.place(x=873, y=75)
 
         # UB入力欄を設定 (layer:12)
         self.ub_text_result = tk.scrolledtext.ScrolledText(self.result_frame, width=34, height=16, fg="#4D4D4D",
                                                            bg="#D4EDF4", bd=0, font=("メイリオ", 11), relief="flat")
+        self.ub_text_result.bind("<ButtonRelease-1>", self.clear_setting)  # 設定画面初期化
         self.ub_text_result.place(x=564, y=79)
 
         # ポップアップメッセージを設定 (layer:top)
         self.popup_message_result = tk.Label(self.result_frame, image="", width=18, height=1, fg="#E2E2E2",
                                              bg="#323232", bd=0, font=("メイリオ", 10), text="")
-        self.popup_message_result.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.popup_message_result.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
         self.popup_message_result.place(x=0, y=540)
 
         # 初期化
@@ -509,7 +528,25 @@ class Frame(tk.Tk):
         self.header_bt_setting_result.configure(bg="#585858", cursor="hand2")
 
     def header_bt_setting_push(self, event):
-        pass
+        global setting_status
+        # フォーカスを初期化
+        self.clear_focus(self)
+
+        if setting_status:
+            # 設定画面展開中は格納する
+            self.clear_setting(self)
+        else:
+            # 設定画面格納中は展開する
+            self.setting_menu_main.place_forget()
+            self.setting_menu_main.place(x=0, y=30)
+            setting_status = True
+
+    # 設定画面用イベント (layer:Top)
+    def clear_setting(self, event):
+        global setting_status
+        self.setting_menu_main.place_forget()
+        self.setting_menu_main.place(x=-267, y=30)
+        setting_status = False
 
     # ---------------------MAIN画面(layer:4~)の設定---------------------
     # SELECTボタン用イベント (layer:6)
@@ -522,8 +559,8 @@ class Frame(tk.Tk):
     def bt_select_push(self, event):
         global FILE_DIR
 
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         file_type = [("", ".mp4")]
         initial_dir = FILE_DIR
@@ -545,10 +582,9 @@ class Frame(tk.Tk):
 
     def bt_start_push(self, event):
         global app_thread
-        global analyze_status
 
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         input_text = self.text_box.get()
         file_path = input_text.strip()
@@ -642,8 +678,8 @@ class Frame(tk.Tk):
     def body_bt_do_stop_push(self, event):
         global analyze_status
 
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         if analyze_status:
             # 解析中の場合一時停止
@@ -664,8 +700,8 @@ class Frame(tk.Tk):
         self.body_bt_end.configure(image=images[NUM_BUTTON_END_2], bg="#303030", cursor="hand2")
 
     def body_bt_end_push(self, event):
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         app.set_analyze_status_end()
 
@@ -679,9 +715,8 @@ class Frame(tk.Tk):
             self.capture_area_analyze.configure(bg="#585858", cursor="hand2")
 
     def capture_area_analyze_push(self, event):
-
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         if not analyze_status:
             # 一時停止中の場合のみ有効
@@ -707,8 +742,8 @@ class Frame(tk.Tk):
         self.body_bt_reset_result.configure(bg="#303030", cursor="hand2")
 
     def body_bt_reset_result_push(self, event):
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         copy_ub_text(self)
 
@@ -723,8 +758,8 @@ class Frame(tk.Tk):
         self.body_bt_copy_result.configure(bg="#303030", cursor="hand2")
 
     def body_bt_copy_result_push(self, event):
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         result_txt = self.ub_text_result.get("1.0", tk.END)
         self.clipboard_clear()
@@ -741,8 +776,8 @@ class Frame(tk.Tk):
         self.capture_area_result.configure(bg="#585858", cursor="hand2")
 
     def capture_area_result_push(self, event):
-        # フォーカスをクリア
-        self.clear_focus(self)
+        # フォーカス/設定画面を初期化
+        self.clear_view_parts(self)
 
         result_path = app.get_result_file_dir()
         subprocess.run('explorer {}'.format(result_path.replace("/", "\\")))
@@ -788,6 +823,11 @@ class Frame(tk.Tk):
                 popup_message_active = False
         else:
             self.popup_message_result.place_forget()
+
+    # ---------------------統合処理の設定---------------------
+    def clear_view_parts(self, event):
+        self.clear_focus(self)
+        self.clear_setting(self)
 
 
 if __name__ == "__main__":
