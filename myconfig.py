@@ -14,7 +14,9 @@ SECTION2_2 = "length_limit"
 
 MOVIE_PATH_DEFAULT = os.path.abspath(os.path.dirname(sys.argv[0]))
 IMAGE_FORMAT_DEFAULT = ".png"
+IMAGE_FORMAT_ANOTHER = ".jpg"
 LENGTH_LIMIT_DEFAULT = "True"
+LENGTH_LIMIT_ANOTHER = "False"
 
 
 def create_config(init, path, image, limit):
@@ -60,12 +62,12 @@ def read_config():
 
         section2 = SECTION2_SETTING
         tmp_image_format = config.get(section2, SECTION2_1)
-        if tmp_image_format != IMAGE_FORMAT_DEFAULT:
-            image_format = ".jpg"
+        if tmp_image_format == IMAGE_FORMAT_ANOTHER:
+            image_format = IMAGE_FORMAT_ANOTHER
 
         tmp_length_limit = config.get(section2, SECTION2_2)
-        if tmp_length_limit != LENGTH_LIMIT_DEFAULT:
-            length_limit = "False"
+        if tmp_length_limit == LENGTH_LIMIT_ANOTHER:
+            length_limit = LENGTH_LIMIT_ANOTHER
 
         create_config(False, movie_path, image_format, length_limit)
 
