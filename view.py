@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tkinter as tk
 import tkinter.filedialog
 import tkinter.scrolledtext
@@ -7,6 +8,7 @@ import subprocess
 from PIL import Image, ImageTk
 import threading
 import app
+import myconfig
 
 ICON = "./picture/icon.ico"
 
@@ -109,7 +111,23 @@ NUM_BUTTON_COPY = 16
 # setting_menu
 NUM_BASE_SETTING = 17
 
-FILE_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
+MOVIE_PATH = myconfig.MOVIE_PATH_DEFAULT
+IMAGE_FORMAT = myconfig.IMAGE_FORMAT_DEFAULT
+LENGTH_LIMIT = myconfig.LENGTH_LIMIT_DEFAULT
+
+
+def load_config():
+    # コンフィグファイルから設定を取得する
+    global MOVIE_PATH
+    global IMAGE_FORMAT
+    global LENGTH_LIMIT
+
+    MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT = myconfig.read_config()
+
+
+def save_config():
+    # コンフィグファイルに設定を保存する
+    myconfig.create_config(False, MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT)
 
 
 def set_waiting_movie(self):
@@ -557,20 +575,20 @@ class Frame(tk.Tk):
         self.bt_select.configure(image=images[NUM_BUTTON_SELECT_2], bg="#599EA2", cursor="hand2")
 
     def bt_select_push(self, event):
-        global FILE_DIR
+        global MOVIE_PATH
 
         # フォーカス/設定画面を初期化
         self.clear_view_parts(self)
 
         file_type = [("", ".mp4")]
-        initial_dir = FILE_DIR
+        initial_dir = MOVIE_PATH
         file = tkinter.filedialog.askopenfilename(filetypes=file_type, initialdir=initial_dir)
 
         if file != "":
             self.text_box.delete(0, tk.END)
             self.text_box.insert(tk.END, file)
 
-            FILE_DIR = os.path.dirname(file)
+            MOVIE_PATH = os.path.dirname(file)
             self.bt_start_push(self)
 
     # STARTボタン用イベント (layer:7)
@@ -831,6 +849,8 @@ class Frame(tk.Tk):
 
 
 if __name__ == "__main__":
+    load_config()
     f = Frame()
     f.mainloop()
     app_thread_init()
+    save_config()
