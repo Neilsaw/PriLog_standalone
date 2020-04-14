@@ -361,7 +361,7 @@ class Frame(tk.Tk):
         # 設定画面画像選択ボタンを設定 (layer:top+2)
         self.setting_menu_image_select = tk.Label(self.main_frame, image=images[NUM_BUTTON_IMAGE_SELECT],
                                               width=57, height=31, bg="#272727", bd=0)
-        self.setting_menu_image_select.place(x=201, y=158)
+        self.setting_menu_image_select.place(x=-66, y=158)
 
         # png / jpg 設定取得
         if IMAGE_FORMAT == ".png":
@@ -377,7 +377,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_png.bind("<Leave>", self.bt_setting_menu_png_nm)
         self.setting_menu_bt_png.bind("<Enter>", self.bt_setting_menu_png_select)
         self.setting_menu_bt_png.bind("<ButtonRelease-1>", self.bt_setting_menu_png_push)
-        self.setting_menu_bt_png.place(x=21, y=239)
+        self.setting_menu_bt_png.place(x=-246, y=239)
 
         # 設定画面JPGボタンを設定 (layer:top+4)
         self.setting_menu_bt_jpg = tk.Label(self.main_frame, image=images[jpg_index],
@@ -385,7 +385,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg.bind("<Leave>", self.bt_setting_menu_jpg_nm)
         self.setting_menu_bt_jpg.bind("<Enter>", self.bt_setting_menu_jpg_select)
         self.setting_menu_bt_jpg.bind("<ButtonRelease-1>", self.bt_setting_menu_jpg_push)
-        self.setting_menu_bt_jpg.place(x=118, y=239)
+        self.setting_menu_bt_jpg.place(x=-149, y=239)
 
         # True / False 設定取得
         if LENGTH_LIMIT == "True":
@@ -401,7 +401,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true.bind("<Leave>", self.bt_setting_menu_limit_true_nm)
         self.setting_menu_bt_limit_true.bind("<Enter>", self.bt_setting_menu_limit_true_select)
         self.setting_menu_bt_limit_true.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_true_push)
-        self.setting_menu_bt_limit_true.place(x=21, y=314)
+        self.setting_menu_bt_limit_true.place(x=-246, y=314)
 
         # 設定画面動画時間制限なしボタンを設定 (layer:top+6)
         self.setting_menu_bt_limit_false = tk.Label(self.main_frame, image=images[false_index],
@@ -409,7 +409,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_false.bind("<Leave>", self.bt_setting_menu_limit_false_nm)
         self.setting_menu_bt_limit_false.bind("<Enter>", self.bt_setting_menu_limit_false_select)
         self.setting_menu_bt_limit_false.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_false_push)
-        self.setting_menu_bt_limit_false.place(x=118, y=314)
+        self.setting_menu_bt_limit_false.place(x=-149, y=314)
 
         # 設定画面閉じるボタンを設定 (layer:top+7)
         self.setting_menu_bt_exit = tk.Label(self.main_frame, image=images[NUM_BUTTON_EXIT],
@@ -417,7 +417,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_exit.bind("<Leave>", self.bt_setting_menu_exit_nm)
         self.setting_menu_bt_exit.bind("<Enter>", self.bt_setting_menu_exit_select)
         self.setting_menu_bt_exit.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
-        self.setting_menu_bt_exit.place(x=102, y=502)
+        self.setting_menu_bt_exit.place(x=-165, y=502)
 
         # フォーカス解除用ダミーを設定 (layer:None)
         self.focus_dummy = tk.Label(self.main_frame)
@@ -653,14 +653,40 @@ class Frame(tk.Tk):
         else:
             # 設定画面格納中は展開する
             self.setting_menu_main.place_forget()
+            self.setting_menu_image_select.place_forget()
+            self.setting_menu_bt_png.place_forget()
+            self.setting_menu_bt_jpg.place_forget()
+            self.setting_menu_bt_limit_true.place_forget()
+            self.setting_menu_bt_limit_false.place_forget()
+            self.setting_menu_bt_exit.place_forget()
+
             self.setting_menu_main.place(x=0, y=30)
+            self.setting_menu_image_select.place(x=201, y=158)
+            self.setting_menu_bt_png.place(x=21, y=239)
+            self.setting_menu_bt_jpg.place(x=118, y=239)
+            self.setting_menu_bt_limit_true.place(x=21, y=314)
+            self.setting_menu_bt_limit_false.place(x=118, y=314)
+            self.setting_menu_bt_exit.place(x=102, y=502)
             setting_status = True
 
     # 設定画面用イベント (layer:Top)
     def clear_setting(self, event):
         global setting_status
         self.setting_menu_main.place_forget()
+        self.setting_menu_image_select.place_forget()
+        self.setting_menu_bt_png.place_forget()
+        self.setting_menu_bt_jpg.place_forget()
+        self.setting_menu_bt_limit_true.place_forget()
+        self.setting_menu_bt_limit_false.place_forget()
+        self.setting_menu_bt_exit.place_forget()
+
         self.setting_menu_main.place(x=-267, y=30)
+        self.setting_menu_image_select.place(x=-66, y=158)
+        self.setting_menu_bt_png.place(x=-246, y=239)
+        self.setting_menu_bt_jpg.place(x=-149, y=239)
+        self.setting_menu_bt_limit_true.place(x=-246, y=314)
+        self.setting_menu_bt_limit_false.place(x=-149, y=314)
+        self.setting_menu_bt_exit.place(x=-165, y=502)
         setting_status = False
 
     # 設定画面PNGボタン用イベント (layer:top+3)
