@@ -57,6 +57,18 @@ BUTTON_COPY = "./picture/copy_button.png"
 
 # setting_menu
 BASE_SETTING = "./picture/setting_base.png"
+BUTTON_IMAGE_SELECT = "./picture/image_select_button.png"
+BUTTON_IMAGE_SELECT_2 = "./picture/image_select_button_2.png"
+BUTTON_PNG_ON = "./picture/png_button_on.png"
+BUTTON_PNG_OFF = "./picture/png_button_off.png"
+BUTTON_JPG_ON = "./picture/jpg_button_on.png"
+BUTTON_JPG_OFF = "./picture/jpg_button_off.png"
+BUTTON_LIMIT_TRUE_ON = "./picture/limit_true_button_on.png"
+BUTTON_LIMIT_TRUE_OFF = "./picture/limit_true_button_off.png"
+BUTTON_LIMIT_FALSE_ON = "./picture/limit_false_button_on.png"
+BUTTON_LIMIT_FALSE_OFF = "./picture/limit_false_button_off.png"
+BUTTON_EXIT = "./picture/exit_button.png"
+BUTTON_EXIT_2 = "./picture/exit_button_2.png"
 
 PICTURE_PATH = [
     BACKGROUND_TOP,
@@ -78,6 +90,18 @@ PICTURE_PATH = [
     BUTTON_RESET,
     BUTTON_COPY,
     BASE_SETTING,
+    BUTTON_IMAGE_SELECT,
+    BUTTON_IMAGE_SELECT_2,
+    BUTTON_PNG_ON,
+    BUTTON_PNG_OFF,
+    BUTTON_JPG_ON,
+    BUTTON_JPG_OFF,
+    BUTTON_LIMIT_TRUE_ON,
+    BUTTON_LIMIT_TRUE_OFF,
+    BUTTON_LIMIT_FALSE_ON,
+    BUTTON_LIMIT_FALSE_OFF,
+    BUTTON_EXIT,
+    BUTTON_EXIT_2,
 ]
 
 # main_frame
@@ -110,6 +134,18 @@ NUM_BUTTON_COPY = 16
 
 # setting_menu
 NUM_BASE_SETTING = 17
+NUM_BUTTON_IMAGE_SELECT = 18
+NUM_BUTTON_IMAGE_SELECT_2 = 19
+NUM_BUTTON_PNG_ON = 20
+NUM_BUTTON_PNG_OFF = 21
+NUM_BUTTON_JPG_ON = 22
+NUM_BUTTON_JPG_OFF = 23
+NUM_BUTTON_LIMIT_TRUE_ON = 24
+NUM_BUTTON_LIMIT_TRUE_OFF = 25
+NUM_BUTTON_LIMIT_FALSE_ON = 26
+NUM_BUTTON_LIMIT_FALSE_OFF = 27
+NUM_BUTTON_EXIT = 28
+NUM_BUTTON_EXIT_2 = 29
 
 MOVIE_PATH = myconfig.MOVIE_PATH_DEFAULT
 IMAGE_FORMAT = myconfig.IMAGE_FORMAT_DEFAULT
@@ -321,6 +357,67 @@ class Frame(tk.Tk):
                                           bg="#272727", bd=0, font=("メイリオ", 10), text="")
         self.setting_menu_main.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
         self.setting_menu_main.place(x=-267, y=30)
+
+        # 設定画面画像選択ボタンを設定 (layer:top+2)
+        self.setting_menu_image_select = tk.Label(self.main_frame, image=images[NUM_BUTTON_IMAGE_SELECT],
+                                              width=57, height=31, bg="#272727", bd=0)
+        self.setting_menu_image_select.place(x=201, y=158)
+
+        # png / jpg 設定取得
+        if IMAGE_FORMAT == ".png":
+            png_index = NUM_BUTTON_PNG_ON
+            jpg_index = NUM_BUTTON_JPG_OFF
+        else:
+            png_index = NUM_BUTTON_PNG_OFF
+            jpg_index = NUM_BUTTON_JPG_ON
+
+        # 設定画面PNGボタンを設定 (layer:top+3)
+        self.setting_menu_bt_png = tk.Label(self.main_frame, image=images[png_index],
+                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_png.bind("<Leave>", self.bt_setting_menu_png_nm)
+        self.setting_menu_bt_png.bind("<Enter>", self.bt_setting_menu_png_select)
+        self.setting_menu_bt_png.bind("<ButtonRelease-1>", self.bt_setting_menu_png_push)
+        self.setting_menu_bt_png.place(x=21, y=239)
+
+        # 設定画面JPGボタンを設定 (layer:top+4)
+        self.setting_menu_bt_jpg = tk.Label(self.main_frame, image=images[jpg_index],
+                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_jpg.bind("<Leave>", self.bt_setting_menu_jpg_nm)
+        self.setting_menu_bt_jpg.bind("<Enter>", self.bt_setting_menu_jpg_select)
+        self.setting_menu_bt_jpg.bind("<ButtonRelease-1>", self.bt_setting_menu_jpg_push)
+        self.setting_menu_bt_jpg.place(x=118, y=239)
+
+        # True / False 設定取得
+        if LENGTH_LIMIT == "True":
+            true_index = NUM_BUTTON_LIMIT_TRUE_ON
+            false_index = NUM_BUTTON_LIMIT_FALSE_OFF
+        else:
+            true_index = NUM_BUTTON_LIMIT_TRUE_OFF
+            false_index = NUM_BUTTON_LIMIT_FALSE_ON
+
+        # 設定画面動画時間制限ありボタンを設定 (layer:top+5)
+        self.setting_menu_bt_limit_true = tk.Label(self.main_frame, image=images[true_index],
+                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_limit_true.bind("<Leave>", self.bt_setting_menu_limit_true_nm)
+        self.setting_menu_bt_limit_true.bind("<Enter>", self.bt_setting_menu_limit_true_select)
+        self.setting_menu_bt_limit_true.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_true_push)
+        self.setting_menu_bt_limit_true.place(x=21, y=314)
+
+        # 設定画面動画時間制限なしボタンを設定 (layer:top+6)
+        self.setting_menu_bt_limit_false = tk.Label(self.main_frame, image=images[false_index],
+                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_limit_false.bind("<Leave>", self.bt_setting_menu_limit_false_nm)
+        self.setting_menu_bt_limit_false.bind("<Enter>", self.bt_setting_menu_limit_false_select)
+        self.setting_menu_bt_limit_false.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_false_push)
+        self.setting_menu_bt_limit_false.place(x=118, y=314)
+
+        # 設定画面閉じるボタンを設定 (layer:top+7)
+        self.setting_menu_bt_exit = tk.Label(self.main_frame, image=images[NUM_BUTTON_EXIT],
+                                              width=63, height=25, bg="#272727", bd=0)
+        self.setting_menu_bt_exit.bind("<Leave>", self.bt_setting_menu_exit_nm)
+        self.setting_menu_bt_exit.bind("<Enter>", self.bt_setting_menu_exit_select)
+        self.setting_menu_bt_exit.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
+        self.setting_menu_bt_exit.place(x=102, y=502)
 
         # フォーカス解除用ダミーを設定 (layer:None)
         self.focus_dummy = tk.Label(self.main_frame)
@@ -565,6 +662,81 @@ class Frame(tk.Tk):
         self.setting_menu_main.place_forget()
         self.setting_menu_main.place(x=-267, y=30)
         setting_status = False
+
+    # 設定画面PNGボタン用イベント (layer:top+3)
+    def bt_setting_menu_png_nm(self, event):
+        self.setting_menu_bt_png.configure(cursor="arrow")
+
+    def bt_setting_menu_png_select(self, event):
+        self.setting_menu_bt_png.configure(cursor="hand2")
+
+    def bt_setting_menu_png_push(self, event):
+        global IMAGE_FORMAT
+
+        if IMAGE_FORMAT != ".png":
+            IMAGE_FORMAT = ".png"
+            self.setting_menu_bt_png.configure(image=images[NUM_BUTTON_PNG_ON])
+            self.setting_menu_bt_jpg.configure(image=images[NUM_BUTTON_JPG_OFF])
+            save_config()
+
+    # 設定画面JPGボタン用イベント (layer:top+4)
+    def bt_setting_menu_jpg_nm(self, event):
+        self.setting_menu_bt_jpg.configure(cursor="arrow")
+
+    def bt_setting_menu_jpg_select(self, event):
+        self.setting_menu_bt_jpg.configure(cursor="hand2")
+
+    def bt_setting_menu_jpg_push(self, event):
+        global IMAGE_FORMAT
+
+        if IMAGE_FORMAT != ".jpg":
+            IMAGE_FORMAT = ".jpg"
+            self.setting_menu_bt_jpg.configure(image=images[NUM_BUTTON_JPG_ON])
+            self.setting_menu_bt_png.configure(image=images[NUM_BUTTON_PNG_OFF])
+            save_config()
+
+    # 設定画面動画時間制限ありボタン用イベント (layer:top+5)
+    def bt_setting_menu_limit_true_nm(self, event):
+        self.setting_menu_bt_limit_true.configure(cursor="arrow")
+
+    def bt_setting_menu_limit_true_select(self, event):
+        self.setting_menu_bt_limit_true.configure(cursor="hand2")
+
+    def bt_setting_menu_limit_true_push(self, event):
+        global LENGTH_LIMIT
+
+        if LENGTH_LIMIT != "True":
+            LENGTH_LIMIT = "True"
+            self.setting_menu_bt_limit_true.configure(image=images[NUM_BUTTON_LIMIT_TRUE_ON])
+            self.setting_menu_bt_limit_false.configure(image=images[NUM_BUTTON_LIMIT_FALSE_OFF])
+            save_config()
+
+    # 設定画面動画時間制限なしボタン用イベント (layer:top+5)
+    def bt_setting_menu_limit_false_nm(self, event):
+        self.setting_menu_bt_limit_false.configure(cursor="arrow")
+
+    def bt_setting_menu_limit_false_select(self, event):
+        self.setting_menu_bt_limit_false.configure(cursor="hand2")
+
+    def bt_setting_menu_limit_false_push(self, event):
+        global LENGTH_LIMIT
+
+        if LENGTH_LIMIT != "False":
+            LENGTH_LIMIT = "False"
+            self.setting_menu_bt_limit_false.configure(image=images[NUM_BUTTON_LIMIT_FALSE_ON])
+            self.setting_menu_bt_limit_true.configure(image=images[NUM_BUTTON_LIMIT_TRUE_OFF])
+            save_config()
+
+    # 設定画面閉じるボタン用イベント (layer:top+7)
+    def bt_setting_menu_exit_nm(self, event):
+        self.setting_menu_bt_exit.configure(image=images[NUM_BUTTON_EXIT], cursor="arrow")
+
+    def bt_setting_menu_exit_select(self, event):
+        self.setting_menu_bt_exit.configure(image=images[NUM_BUTTON_EXIT_2], cursor="hand2")
+
+    def bt_setting_menu_exit_push(self, event):
+        self.bt_setting_menu_exit_nm(self)
+        self.clear_setting(self)
 
     # ---------------------MAIN画面(layer:4~)の設定---------------------
     # SELECTボタン用イベント (layer:6)
