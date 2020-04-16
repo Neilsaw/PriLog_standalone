@@ -807,6 +807,8 @@ class Frame(tk.Tk):
         if file_path is not "":
             app_thread_init()
             app.set_movie_status_do()
+            app.set_image_format(IMAGE_FORMAT)
+            app.set_length_limit(LENGTH_LIMIT)
             app_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
             app_thread.start()
 

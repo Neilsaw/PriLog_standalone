@@ -124,6 +124,9 @@ MOVIE_STOP = 1
 ANALYZE_STATUS = ANALYZE_DO
 MOVIE_GET_STATUS = MOVIE_DO
 
+SAVE_IMAGE_FORMAT = ".png"
+MOVIE_LENGTH_LIMIT = "True"
+
 RESULT_FILE_DIR = None
 
 stream_dir = "tmp/"
@@ -234,9 +237,10 @@ def search(youtube_id):
     except:
         return None, None, ERROR_CANT_GET_MOVIE
 
-    movie_length = yt.length
-    if int(movie_length) > 600:
-        return None, None, ERROR_TOO_LONG
+    if MOVIE_LENGTH_LIMIT == "True":
+        movie_length = yt.length
+        if int(movie_length) > 600:
+            return None, None, ERROR_TOO_LONG
 
     stream = yt.streams.get_by_itag("22")
     if stream is None:
@@ -666,9 +670,10 @@ def movie_check(movie_path):
         video.release()
         return ERROR_NOT_SUPPORTED, None
 
-    if (frame_count / frame_rate) >= 600:
-        video.release()
-        return ERROR_TOO_LONG, None
+    if MOVIE_LENGTH_LIMIT == "True":
+        if (frame_count / frame_rate) >= 600:
+            video.release()
+            return ERROR_TOO_LONG, None
 
     video.release()
 
@@ -843,12 +848,31 @@ def set_movie_status_stop():
     MOVIE_GET_STATUS = MOVIE_STOP
 
 
+def set_image_format(image_format):
+    # 画像保存するフォーマットを形式(png or jpg) を取得する
+    global SAVE_IMAGE_FORMAT
+
+    SAVE_IMAGE_FORMAT = image_format
+
+
+def set_length_limit(length_limit):
+    # 動画解析の制限時間(あり or なし) を取得する
+    global MOVIE_LENGTH_LIMIT
+
+    MOVIE_LENGTH_LIMIT = length_limit
+
+
 def save_capture_frame(frame, path, name):
     # 検出時の画像を結果として保存する
-    save_name = path + name + ".png"
+    image_format = SAVE_IMAGE_FORMAT
+
+    if image_format != ".png":
+        image_format = ".jpg"
+
+    save_name = path + name + image_format
     if os.path.exists(save_name):
         for i in itertools.count(1):
-            save_name = "{}_{}{}".format(path + name, i, ".png")
+            save_name = "{}_{}{}".format(path + name, i, image_format)
 
             if not os.path.exists(save_name):
                 break
