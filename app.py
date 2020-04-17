@@ -624,29 +624,6 @@ def analyze_anna_icon_frame(frame, roi, characters_find):
     return
 
 
-def main():
-    root = tkinter.Tk()
-    root.withdraw()
-
-    file_type = [("", "*")]
-
-    initial_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-    file = tkinter.filedialog.askopenfilename(filetypes=file_type, initialdir=initial_dir)
-
-    if file == "":
-        print("No video source found")
-        sys.exit(1)
-
-    movie_path = file
-
-    time_line, time_data, total_damage, debuff_value, status = analyze_movie(movie_path)
-
-    if status is NO_ERROR:
-        print("解析成功")
-    else:
-        print("申し訳ありません。非対応の解像度です。16:9の解像度に対応しています。")
-
-
 # view用定義
 FILE = 0
 YOUTUBE = 1
@@ -888,7 +865,3 @@ def save_txt(txt, path):
         f.close()
     except PermissionError:
         pass
-
-
-if __name__ == "__main__":
-    main()
