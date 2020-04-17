@@ -9,6 +9,7 @@ from PIL import Image, ImageTk
 import threading
 import app
 import myconfig
+import bg_maker
 
 ICON = "./picture/icon.ico"
 
@@ -27,8 +28,11 @@ popup_message_active = False
 POPUP_MESSAGE_START = 540
 POPUP_MESSAGE_STOP = 518
 
+SETTING_IMAGE = []
+
 # main_frame
-BACKGROUND_TOP = "./picture/bg_top.png"
+BACKGROUND_BASE = "./picture/bg.png"
+BACKGROUND_TOP = "./picture/over_bg_top.png"
 BUTTON_HOME = "./picture/home_button.png"
 BUTTON_SETTING = "./picture/setting_button.png"
 BUTTON_SELECT = "./picture/select_button.png"
@@ -42,7 +46,7 @@ BACKGROUND_DRAG = "./picture/bg_top_drag.png"
 """
 
 # analyze_frame
-BACKGROUND_ANALYZE = "./picture/bg_analyze.png"
+BACKGROUND_ANALYZE = "./picture/over_bg_analyze.png"
 BACKGROUND_CAPTURE = "./picture/bg_capture.png"
 BUTTON_DO = "./picture/do_button.png"
 BUTTON_DO_2 = "./picture/do_button_2.png"
@@ -71,6 +75,7 @@ BUTTON_EXIT = "./picture/exit_button.png"
 BUTTON_EXIT_2 = "./picture/exit_button_2.png"
 
 PICTURE_PATH = [
+    BACKGROUND_BASE,
     BACKGROUND_TOP,
     BUTTON_HOME,
     BUTTON_SETTING,
@@ -105,13 +110,14 @@ PICTURE_PATH = [
 ]
 
 # main_frame
-NUM_BACKGROUND_TOP = 0
-NUM_BUTTON_HOME = 1
-NUM_BUTTON_SETTING = 2
-NUM_BUTTON_SELECT = 3
-NUM_BUTTON_SELECT_2 = 4
-NUM_BUTTON_START = 5
-NUM_BUTTON_START_2 = 6
+NUM_BACKGROUND_BASE = 0
+NUM_BACKGROUND_TOP = 1
+NUM_BUTTON_HOME = 2
+NUM_BUTTON_SETTING = 3
+NUM_BUTTON_SELECT = 4
+NUM_BUTTON_SELECT_2 = 5
+NUM_BUTTON_START = 6
+NUM_BUTTON_START_2 = 7
 
 """
 # select_frame
@@ -119,33 +125,33 @@ NUM_BACKGROUND_DRAG = 6
 """
 
 # analyze_frame
-NUM_BACKGROUND_ANALYZE = 7
-NUM_BACKGROUND_CAPTURE = 8
-NUM_BUTTON_DO = 9
-NUM_BUTTON_DO_2 = 10
-NUM_BUTTON_STOP = 11
-NUM_BUTTON_STOP_2 = 12
-NUM_BUTTON_END = 13
-NUM_BUTTON_END_2 = 14
+NUM_BACKGROUND_ANALYZE = 8
+NUM_BACKGROUND_CAPTURE = 9
+NUM_BUTTON_DO = 10
+NUM_BUTTON_DO_2 = 11
+NUM_BUTTON_STOP = 12
+NUM_BUTTON_STOP_2 = 13
+NUM_BUTTON_END = 14
+NUM_BUTTON_END_2 = 15
 
 # reset_frame
-NUM_BUTTON_RESET = 15
-NUM_BUTTON_COPY = 16
+NUM_BUTTON_RESET = 16
+NUM_BUTTON_COPY = 17
 
 # setting_menu
-NUM_BASE_SETTING = 17
-NUM_BUTTON_IMAGE_SELECT = 18
-NUM_BUTTON_IMAGE_SELECT_2 = 19
-NUM_BUTTON_PNG_ON = 20
-NUM_BUTTON_PNG_OFF = 21
-NUM_BUTTON_JPG_ON = 22
-NUM_BUTTON_JPG_OFF = 23
-NUM_BUTTON_LIMIT_TRUE_ON = 24
-NUM_BUTTON_LIMIT_TRUE_OFF = 25
-NUM_BUTTON_LIMIT_FALSE_ON = 26
-NUM_BUTTON_LIMIT_FALSE_OFF = 27
-NUM_BUTTON_EXIT = 28
-NUM_BUTTON_EXIT_2 = 29
+NUM_BASE_SETTING = 18
+NUM_BUTTON_IMAGE_SELECT = 19
+NUM_BUTTON_IMAGE_SELECT_2 = 20
+NUM_BUTTON_PNG_ON = 21
+NUM_BUTTON_PNG_OFF = 22
+NUM_BUTTON_JPG_ON = 23
+NUM_BUTTON_JPG_OFF = 24
+NUM_BUTTON_LIMIT_TRUE_ON = 25
+NUM_BUTTON_LIMIT_TRUE_OFF = 26
+NUM_BUTTON_LIMIT_FALSE_ON = 27
+NUM_BUTTON_LIMIT_FALSE_OFF = 28
+NUM_BUTTON_EXIT = 29
+NUM_BUTTON_EXIT_2 = 30
 
 MOVIE_PATH = myconfig.MOVIE_PATH_DEFAULT
 IMAGE_FORMAT = myconfig.IMAGE_FORMAT_DEFAULT
@@ -288,6 +294,9 @@ class Frame(tk.Tk):
         # ---------------------画像の設定---------------------
         for i in range(len(PICTURE_PATH)):
             work_img = Image.open(PICTURE_PATH[i])
+            if i == NUM_BACKGROUND_TOP or i == NUM_BACKGROUND_ANALYZE:
+                work_img = bg_maker.bg_editor(Image.open(PICTURE_PATH[NUM_BACKGROUND_BASE]), work_img)
+
             work_img = ImageTk.PhotoImage(work_img)
             images.append(work_img)
 
@@ -296,9 +305,9 @@ class Frame(tk.Tk):
         self.main_frame = tk.Frame()
         self.main_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
-        self.bg = tk.Label(self.main_frame, image=images[NUM_BACKGROUND_TOP], bd=0)
-        self.bg.bind("<ButtonRelease-1>", self.clear_view_parts)         # フォーカス/設定画面初期化
-        self.bg.pack(fill="x")
+        self.bg_main = tk.Label(self.main_frame, image=images[NUM_BACKGROUND_TOP], bd=0)
+        self.bg_main.bind("<ButtonRelease-1>", self.clear_view_parts)         # フォーカス/設定画面初期化
+        self.bg_main.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
         self.header = tk.Label(self.main_frame, width=960, height=0, bg="#272727", font=("", 18))
@@ -354,13 +363,25 @@ class Frame(tk.Tk):
 
         # 設定画面を設定 (layer:top)
         self.setting_menu_main = tk.Label(self.main_frame, image=images[NUM_BASE_SETTING], width=267, height=510,
-                                          bg="#272727", bd=0, font=("メイリオ", 10), text="")
+                                          bd=0, text="")
         self.setting_menu_main.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
         self.setting_menu_main.place(x=-267, y=30)
 
+        # 設定画面サンプル画像を設定 (layer:top+1)
+        menu_image = (Image.open(BACKGROUND_BASE)).resize((160, 90))
+        SETTING_IMAGE.clear()
+        SETTING_IMAGE.append(ImageTk.PhotoImage(menu_image))
+
+        self.setting_menu_image = tk.Label(self.main_frame, image=SETTING_IMAGE[0], width=160, height=90, bd=0, text="")
+        self.setting_menu_image.bind("<ButtonRelease-1>", self.clear_focus)  # フォーカス初期化
+        self.setting_menu_image.place(x=-245, y=95)
+
         # 設定画面画像選択ボタンを設定 (layer:top+2)
         self.setting_menu_image_select = tk.Label(self.main_frame, image=images[NUM_BUTTON_IMAGE_SELECT],
-                                              width=57, height=31, bg="#272727", bd=0)
+                                              width=57, height=31, bd=0)
+        self.setting_menu_image_select.bind("<Leave>", self.bt_setting_menu_image_select_nm)
+        self.setting_menu_image_select.bind("<Enter>", self.bt_setting_menu_image_select_select)
+        self.setting_menu_image_select.bind("<ButtonRelease-1>", self.bt_setting_menu_image_select_push)
         self.setting_menu_image_select.place(x=-66, y=158)
 
         # png / jpg 設定取得
@@ -372,16 +393,14 @@ class Frame(tk.Tk):
             jpg_index = NUM_BUTTON_JPG_ON
 
         # 設定画面PNGボタンを設定 (layer:top+3)
-        self.setting_menu_bt_png = tk.Label(self.main_frame, image=images[png_index],
-                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_png = tk.Label(self.main_frame, image=images[png_index], width=70, height=17, bd=0)
         self.setting_menu_bt_png.bind("<Leave>", self.bt_setting_menu_png_nm)
         self.setting_menu_bt_png.bind("<Enter>", self.bt_setting_menu_png_select)
         self.setting_menu_bt_png.bind("<ButtonRelease-1>", self.bt_setting_menu_png_push)
         self.setting_menu_bt_png.place(x=-246, y=239)
 
         # 設定画面JPGボタンを設定 (layer:top+4)
-        self.setting_menu_bt_jpg = tk.Label(self.main_frame, image=images[jpg_index],
-                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_jpg = tk.Label(self.main_frame, image=images[jpg_index], width=70, height=17, bd=0)
         self.setting_menu_bt_jpg.bind("<Leave>", self.bt_setting_menu_jpg_nm)
         self.setting_menu_bt_jpg.bind("<Enter>", self.bt_setting_menu_jpg_select)
         self.setting_menu_bt_jpg.bind("<ButtonRelease-1>", self.bt_setting_menu_jpg_push)
@@ -396,24 +415,21 @@ class Frame(tk.Tk):
             false_index = NUM_BUTTON_LIMIT_FALSE_ON
 
         # 設定画面動画時間制限ありボタンを設定 (layer:top+5)
-        self.setting_menu_bt_limit_true = tk.Label(self.main_frame, image=images[true_index],
-                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_limit_true = tk.Label(self.main_frame, image=images[true_index], width=70, height=17, bd=0)
         self.setting_menu_bt_limit_true.bind("<Leave>", self.bt_setting_menu_limit_true_nm)
         self.setting_menu_bt_limit_true.bind("<Enter>", self.bt_setting_menu_limit_true_select)
         self.setting_menu_bt_limit_true.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_true_push)
         self.setting_menu_bt_limit_true.place(x=-246, y=314)
 
         # 設定画面動画時間制限なしボタンを設定 (layer:top+6)
-        self.setting_menu_bt_limit_false = tk.Label(self.main_frame, image=images[false_index],
-                                              width=70, height=17, bg="#272727", bd=0)
+        self.setting_menu_bt_limit_false = tk.Label(self.main_frame, image=images[false_index], width=70, height=17, bd=0)
         self.setting_menu_bt_limit_false.bind("<Leave>", self.bt_setting_menu_limit_false_nm)
         self.setting_menu_bt_limit_false.bind("<Enter>", self.bt_setting_menu_limit_false_select)
         self.setting_menu_bt_limit_false.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_false_push)
         self.setting_menu_bt_limit_false.place(x=-149, y=314)
 
         # 設定画面閉じるボタンを設定 (layer:top+7)
-        self.setting_menu_bt_exit = tk.Label(self.main_frame, image=images[NUM_BUTTON_EXIT],
-                                              width=63, height=25, bg="#272727", bd=0)
+        self.setting_menu_bt_exit = tk.Label(self.main_frame, image=images[NUM_BUTTON_EXIT], width=63, height=25, bd=0)
         self.setting_menu_bt_exit.bind("<Leave>", self.bt_setting_menu_exit_nm)
         self.setting_menu_bt_exit.bind("<Enter>", self.bt_setting_menu_exit_select)
         self.setting_menu_bt_exit.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
@@ -427,9 +443,9 @@ class Frame(tk.Tk):
         self.analyze_frame = tk.Frame()
         self.analyze_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
-        self.bg = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
-        self.bg.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
-        self.bg.pack(fill="x")
+        self.bg_analyze = tk.Label(self.analyze_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
+        self.bg_analyze.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
+        self.bg_analyze.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
         self.header = tk.Label(self.analyze_frame, width=960, height=0, bg="#272727", font=("", 18))
@@ -518,9 +534,9 @@ class Frame(tk.Tk):
         self.result_frame = tk.Frame()
         self.result_frame.grid(row=0, column=0, sticky=tk.W)
         # 背景を設定(layer:0)
-        self.bg = tk.Label(self.result_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
-        self.bg.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
-        self.bg.pack(fill="x")
+        self.bg_result = tk.Label(self.result_frame, image=images[NUM_BACKGROUND_ANALYZE], bd=0)
+        self.bg_result.bind("<ButtonRelease-1>", self.clear_view_parts)  # フォーカス/設定画面初期化
+        self.bg_result.pack(fill="x")
 
         # ヘッダーを設定 (layer:1)
         self.header = tk.Label(self.result_frame, width=960, height=0, bg="#272727", font=("", 18))
@@ -653,6 +669,7 @@ class Frame(tk.Tk):
         else:
             # 設定画面格納中は展開する
             self.setting_menu_main.place_forget()
+            self.setting_menu_image.place_forget()
             self.setting_menu_image_select.place_forget()
             self.setting_menu_bt_png.place_forget()
             self.setting_menu_bt_jpg.place_forget()
@@ -661,6 +678,7 @@ class Frame(tk.Tk):
             self.setting_menu_bt_exit.place_forget()
 
             self.setting_menu_main.place(x=0, y=30)
+            self.setting_menu_image.place(x=22, y=95)
             self.setting_menu_image_select.place(x=201, y=158)
             self.setting_menu_bt_png.place(x=21, y=239)
             self.setting_menu_bt_jpg.place(x=118, y=239)
@@ -673,6 +691,7 @@ class Frame(tk.Tk):
     def clear_setting(self, event):
         global setting_status
         self.setting_menu_main.place_forget()
+        self.setting_menu_image.place_forget()
         self.setting_menu_image_select.place_forget()
         self.setting_menu_bt_png.place_forget()
         self.setting_menu_bt_jpg.place_forget()
@@ -681,6 +700,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_exit.place_forget()
 
         self.setting_menu_main.place(x=-267, y=30)
+        self.setting_menu_image.place(x=-245, y=95)
         self.setting_menu_image_select.place(x=-66, y=158)
         self.setting_menu_bt_png.place(x=-246, y=239)
         self.setting_menu_bt_jpg.place(x=-149, y=239)
@@ -688,6 +708,47 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_false.place(x=-149, y=314)
         self.setting_menu_bt_exit.place(x=-165, y=502)
         setting_status = False
+
+    # 設定画面画像選択ボタン用イベント (layer:top+2)
+    def bt_setting_menu_image_select_nm(self, event):
+        self.setting_menu_image_select.configure(image=images[NUM_BUTTON_IMAGE_SELECT], cursor="arrow")
+
+    def bt_setting_menu_image_select_select(self, event):
+        self.setting_menu_image_select.configure(image=images[NUM_BUTTON_IMAGE_SELECT_2], cursor="hand2")
+
+    def bt_setting_menu_image_select_push(self, event):
+        self.bt_setting_menu_image_select_nm(self)
+
+        file_type = [("", ".png;*.jpg")]
+        initial_dir = "./"
+        file = tkinter.filedialog.askopenfilename(filetypes=file_type, initialdir=initial_dir)
+
+        if file != "":
+            # 背景の保存
+            base_image = (Image.open(file)).resize((960, 540))
+            base_image.save(BACKGROUND_BASE)
+            base_image_save = ImageTk.PhotoImage(base_image)
+            images[NUM_BACKGROUND_BASE] = base_image_save
+
+            # main画面背景の設定
+            bg_main = bg_maker.bg_editor(base_image, Image.open(PICTURE_PATH[NUM_BACKGROUND_TOP]))
+            bg_main = ImageTk.PhotoImage(bg_main)
+            self.bg_main.configure(image=bg_main)
+            images[NUM_BACKGROUND_TOP] = bg_main
+
+            # analyze/result画面背景の設定
+            bg_analyze = bg_maker.bg_editor(base_image, Image.open(PICTURE_PATH[NUM_BACKGROUND_ANALYZE]))
+            bg_analyze = ImageTk.PhotoImage(bg_analyze)
+            self.bg_analyze.configure(image=bg_analyze)
+            self.bg_result.configure(image=bg_analyze)
+            images[NUM_BACKGROUND_ANALYZE] = bg_analyze
+
+            # setting画面画像の設定
+            menu_image = base_image.resize((160, 90))
+            menu_image = ImageTk.PhotoImage(menu_image)
+            self.setting_menu_image.configure(image=menu_image)
+            SETTING_IMAGE.clear()
+            SETTING_IMAGE.append(menu_image)
 
     # 設定画面PNGボタン用イベント (layer:top+3)
     def bt_setting_menu_png_nm(self, event):
