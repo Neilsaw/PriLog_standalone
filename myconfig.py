@@ -53,7 +53,7 @@ def read_config():
         create_config(True, None, None, None)
     else:
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read(CONFIG_FILE)
 
         section1 = SECTION1_PATH
         tmp_movie_path = config.get(section1, SECTION1_1)
