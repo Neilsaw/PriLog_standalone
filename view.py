@@ -327,6 +327,7 @@ class Frame(tk.Tk):
         self.text_box = tk.Entry(self.main_frame, width=38, fg="#A0A0A0", bg="#FFFFFF",
                                  bd=5, font=("Yu Gothic UI", 12), relief="flat")
         self.text_box.bind("<ButtonRelease-1>", self.clear_setting)         # 設定画面初期化
+        self.text_box.bind("<Return>", self.bt_start_push)  # 設定画面初期化
         self.text_box.place(x=267, y=278)
 
         # エラーメッセージフォームを設定 (layer:5)
