@@ -10,7 +10,9 @@ import app
 import myconfig
 import bg_maker
 
-ICON = "./picture/icon.ico"
+VERSION = "v0.0.0"
+
+ICON = "./resource/image/icon.ico"
 
 images = []
 
@@ -31,43 +33,43 @@ IMAGE_PATH = "./"
 SETTING_IMAGE = []
 
 # main_frame
-BACKGROUND_BASE = "./picture/bg.png"
-BACKGROUND_TOP = "./picture/over_bg_top.png"
-BUTTON_HOME = "./picture/home_button.png"
-BUTTON_SETTING = "./picture/setting_button.png"
-BUTTON_SELECT = "./picture/select_button.png"
-BUTTON_SELECT_2 = "./picture/select_button_2.png"
-BUTTON_START = "./picture/start_button.png"
-BUTTON_START_2 = "./picture/start_button_2.png"
+BACKGROUND_BASE = "./resource/image/bg.png"
+BACKGROUND_TOP = "./resource/image/bg/over_bg_top.png"
+BUTTON_HOME = "./resource/image/button/home_button.png"
+BUTTON_SETTING = "./resource/image/button/setting_button.png"
+BUTTON_SELECT = "./resource/image/button/select_button.png"
+BUTTON_SELECT_2 = "./resource/image/button/select_button_2.png"
+BUTTON_START = "./resource/image/button/start_button.png"
+BUTTON_START_2 = "./resource/image/button/start_button_2.png"
 
 # analyze_frame
-BACKGROUND_ANALYZE = "./picture/over_bg_analyze.png"
-BACKGROUND_CAPTURE = "./picture/bg_capture.png"
-BUTTON_DO = "./picture/do_button.png"
-BUTTON_DO_2 = "./picture/do_button_2.png"
-BUTTON_STOP = "./picture/stop_button.png"
-BUTTON_STOP_2 = "./picture/stop_button_2.png"
-BUTTON_END = "./picture/end_button.png"
-BUTTON_END_2 = "./picture/end_button_2.png"
+BACKGROUND_ANALYZE = "./resource/image/bg/over_bg_analyze.png"
+BACKGROUND_CAPTURE = "./resource/image/bg/bg_capture.png"
+BUTTON_DO = "./resource/image/button/do_button.png"
+BUTTON_DO_2 = "./resource/image/button/do_button_2.png"
+BUTTON_STOP = "./resource/image/button/stop_button.png"
+BUTTON_STOP_2 = "./resource/image/button/stop_button_2.png"
+BUTTON_END = "./resource/image/button/end_button.png"
+BUTTON_END_2 = "./resource/image/button/end_button_2.png"
 
 # result_frame
-BUTTON_RESET = "./picture/reset_button.png"
-BUTTON_COPY = "./picture/copy_button.png"
+BUTTON_RESET = "./resource/image/button/reset_button.png"
+BUTTON_COPY = "./resource/image/button/copy_button.png"
 
 # setting_menu
-BASE_SETTING = "./picture/setting_base.png"
-BUTTON_IMAGE_SELECT = "./picture/image_select_button.png"
-BUTTON_IMAGE_SELECT_2 = "./picture/image_select_button_2.png"
-BUTTON_PNG_ON = "./picture/png_button_on.png"
-BUTTON_PNG_OFF = "./picture/png_button_off.png"
-BUTTON_JPG_ON = "./picture/jpg_button_on.png"
-BUTTON_JPG_OFF = "./picture/jpg_button_off.png"
-BUTTON_LIMIT_TRUE_ON = "./picture/limit_true_button_on.png"
-BUTTON_LIMIT_TRUE_OFF = "./picture/limit_true_button_off.png"
-BUTTON_LIMIT_FALSE_ON = "./picture/limit_false_button_on.png"
-BUTTON_LIMIT_FALSE_OFF = "./picture/limit_false_button_off.png"
-BUTTON_EXIT = "./picture/exit_button.png"
-BUTTON_EXIT_2 = "./picture/exit_button_2.png"
+BASE_SETTING = "./resource/image/setting/setting_base.png"
+BUTTON_IMAGE_SELECT = "./resource/image/setting/image_select_button.png"
+BUTTON_IMAGE_SELECT_2 = "./resource/image/setting/image_select_button_2.png"
+BUTTON_PNG_ON = "./resource/image/setting/png_button_on.png"
+BUTTON_PNG_OFF = "./resource/image/setting/png_button_off.png"
+BUTTON_JPG_ON = "./resource/image/setting/jpg_button_on.png"
+BUTTON_JPG_OFF = "./resource/image/setting/jpg_button_off.png"
+BUTTON_LIMIT_TRUE_ON = "./resource/image/setting/limit_true_button_on.png"
+BUTTON_LIMIT_TRUE_OFF = "./resource/image/setting/limit_true_button_off.png"
+BUTTON_LIMIT_FALSE_ON = "./resource/image/setting/limit_false_button_on.png"
+BUTTON_LIMIT_FALSE_OFF = "./resource/image/setting/limit_false_button_off.png"
+BUTTON_EXIT = "./resource/image/setting/exit_button.png"
+BUTTON_EXIT_2 = "./resource/image/setting/exit_button_2.png"
 
 PICTURE_PATH = [
     BACKGROUND_BASE,
@@ -426,6 +428,11 @@ class Frame(tk.Tk):
         self.setting_menu_bt_exit_main.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
         self.setting_menu_bt_exit_main.place(x=-165, y=502)
 
+        # 設定画面バージョン情報を設定 (layer:top+8)
+        self.setting_menu_version_main = tk.Label(self.main_frame, image="", width=6, height=1, fg="#E2E2E2",
+                                             bg="#272727", bd=0, font=("メイリオ", 8), text=VERSION)
+        self.setting_menu_version_main.place(x=-262, y=505)
+
         # フォーカス解除用ダミーを設定 (layer:None)
         self.focus_dummy = tk.Label(self.main_frame)
         self.focus_dummy.place(x=1000, y=1000)
@@ -574,6 +581,11 @@ class Frame(tk.Tk):
         self.setting_menu_bt_exit_analyze.bind("<Enter>", self.bt_setting_menu_exit_select)
         self.setting_menu_bt_exit_analyze.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
         self.setting_menu_bt_exit_analyze.place(x=-165, y=502)
+
+        # 設定画面バージョン情報を設定 (layer:top+8)
+        self.setting_menu_version_analyze = tk.Label(self.analyze_frame, image="", width=6, height=1, fg="#E2E2E2",
+                                             bg="#272727", bd=0, font=("メイリオ", 8), text=VERSION)
+        self.setting_menu_version_analyze.place(x=-262, y=505)
 
         # ---------------------結果画面の設定---------------------
         self.result_frame = tk.Frame()
@@ -726,6 +738,11 @@ class Frame(tk.Tk):
         self.setting_menu_bt_exit_result.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
         self.setting_menu_bt_exit_result.place(x=-165, y=502)
 
+        # 設定画面バージョン情報を設定 (layer:top+8)
+        self.setting_menu_version_result = tk.Label(self.result_frame, image="", width=6, height=1, fg="#E2E2E2",
+                                             bg="#272727", bd=0, font=("メイリオ", 8), text=VERSION)
+        self.setting_menu_version_result.place(x=-262, y=505)
+
         # 初期化
         home_init(self)
 
@@ -798,6 +815,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_main.place(x=21, y=314)
         self.setting_menu_bt_limit_false_main.place(x=118, y=314)
         self.setting_menu_bt_exit_main.place(x=102, y=502)
+        self.setting_menu_version_main.place(x=5, y=502)
 
         # 解析画面設定画面の配置
         self.setting_menu_analyze.place(x=0, y=30)
@@ -808,6 +826,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_analyze.place(x=21, y=314)
         self.setting_menu_bt_limit_false_analyze.place(x=118, y=314)
         self.setting_menu_bt_exit_analyze.place(x=102, y=502)
+        self.setting_menu_version_analyze.place(x=5, y=502)
 
         # 結果画面設定画面の配置
         self.setting_menu_result.place(x=0, y=30)
@@ -818,6 +837,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_result.place(x=21, y=314)
         self.setting_menu_bt_limit_false_result.place(x=118, y=314)
         self.setting_menu_bt_exit_result.place(x=102, y=502)
+        self.setting_menu_version_result.place(x=5, y=502)
 
     def setting_menu_place_out(self):
         # 設定画面を画面外に配置する
@@ -831,6 +851,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_main.place(x=-246, y=314)
         self.setting_menu_bt_limit_false_main.place(x=-149, y=314)
         self.setting_menu_bt_exit_main.place(x=-165, y=502)
+        self.setting_menu_version_main.place(x=-262, y=505)
 
         # 解析画面設定画面の配置
         self.setting_menu_analyze.place(x=-267, y=30)
@@ -841,6 +862,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_analyze.place(x=-246, y=314)
         self.setting_menu_bt_limit_false_analyze.place(x=-149, y=314)
         self.setting_menu_bt_exit_analyze.place(x=-165, y=502)
+        self.setting_menu_version_analyze.place(x=-262, y=505)
 
         # 結果画面設定画面の配置
         self.setting_menu_result.place(x=-267, y=30)
@@ -851,6 +873,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_result.place(x=-246, y=314)
         self.setting_menu_bt_limit_false_result.place(x=-149, y=314)
         self.setting_menu_bt_exit_result.place(x=-165, y=502)
+        self.setting_menu_version_result.place(x=-262, y=505)
 
     def setting_menu_place_forget(self):
         # 設定画面配置位置を初期化する
@@ -864,6 +887,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_main.place_forget()
         self.setting_menu_bt_limit_false_main.place_forget()
         self.setting_menu_bt_exit_main.place_forget()
+        self.setting_menu_version_main.place_forget()
 
         # 解析画面設定画面の初期化
         self.setting_menu_analyze.place_forget()
@@ -874,6 +898,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_analyze.place_forget()
         self.setting_menu_bt_limit_false_analyze.place_forget()
         self.setting_menu_bt_exit_analyze.place_forget()
+        self.setting_menu_version_analyze.place_forget()
 
         # 結果画面設定画面の初期化
         self.setting_menu_result.place_forget()
@@ -884,6 +909,7 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_true_result.place_forget()
         self.setting_menu_bt_limit_false_result.place_forget()
         self.setting_menu_bt_exit_result.place_forget()
+        self.setting_menu_version_result.place_forget()
 
     # 設定画面画像選択ボタン用イベント (layer:top+2)
     def bt_setting_menu_image_select_nm(self, event):

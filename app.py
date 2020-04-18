@@ -7,10 +7,6 @@ from pytube import exceptions
 import time as tm
 import datetime
 import cv2
-import tkinter
-import tkinter.filedialog
-import tkinter.messagebox
-import sys
 import itertools
 import characters as cd
 import after_caluculation as ac
@@ -172,14 +168,14 @@ def model_init(video_type):
     global CROWN_DATA               # 王冠テンプレート
 
     if video_type is RESOLUTION_16_9:
-        CHARACTERS_DATA = np.load("model/16_9/UB_name_16_9.npy")
-        SEC_DATA = np.load("model/16_9/timer_sec_16_9.npy")
-        MENU_DATA = np.load("model/16_9/menu_16_9.npy")
-        SCORE_DATA = np.load("model/16_9/score_data_16_9.npy")
-        DAMAGE_DATA = np.load("model/16_9/damage_data_16_9.npy")
-        ICON_DATA = np.load("model/16_9/icon_data_16_9.npy")
-        DETAIL_REPORT_DATA = np.load("model/16_9/detail_report_16_9.npy")
-        CROWN_DATA = np.load("model/16_9/crown_16_9.npy")
+        CHARACTERS_DATA = np.load("./resource/model/16_9/UB_name_16_9.npy")
+        SEC_DATA = np.load("./resource/model/16_9/timer_sec_16_9.npy")
+        MENU_DATA = np.load("./resource/model/16_9/menu_16_9.npy")
+        SCORE_DATA = np.load("./resource/model/16_9/score_data_16_9.npy")
+        DAMAGE_DATA = np.load("./resource/model/16_9/damage_data_16_9.npy")
+        ICON_DATA = np.load("./resource/model/16_9/icon_data_16_9.npy")
+        DETAIL_REPORT_DATA = np.load("./resource/model/16_9/detail_report_16_9.npy")
+        CROWN_DATA = np.load("./resource/model/16_9/crown_16_9.npy")
 
     return
 
