@@ -147,6 +147,8 @@ NUM_BUTTON_EXIT_2 = 30
 MOVIE_PATH = myconfig.MOVIE_PATH_DEFAULT
 IMAGE_FORMAT = myconfig.IMAGE_FORMAT_DEFAULT
 LENGTH_LIMIT = myconfig.LENGTH_LIMIT_DEFAULT
+WINDOW_X_POSITION = myconfig.WINDOW_POSITION_X_DEFAULT
+WINDOW_Y_POSITION = myconfig.WINDOW_POSITION_Y_DEFAULT
 
 
 def load_config():
@@ -154,13 +156,20 @@ def load_config():
     global MOVIE_PATH
     global IMAGE_FORMAT
     global LENGTH_LIMIT
+    global WINDOW_X_POSITION
+    global WINDOW_Y_POSITION
 
-    MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT = myconfig.read_config()
+    MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT, WINDOW_X_POSITION, WINDOW_Y_POSITION = myconfig.read_config()
 
 
 def save_config():
     # コンフィグファイルに設定を保存する
-    myconfig.create_config(False, MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT)
+    global WINDOW_X_POSITION
+    global WINDOW_Y_POSITION
+
+    WINDOW_X_POSITION = str(f.winfo_rootx())
+    WINDOW_Y_POSITION = str(f.winfo_rooty())
+    myconfig.create_config(False, MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT, WINDOW_X_POSITION, WINDOW_Y_POSITION)
 
 
 def set_waiting_movie(self):
@@ -278,6 +287,8 @@ class Frame(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title('PriLog')
         self.geometry("960x540")
+        self.geometry("+" + WINDOW_X_POSITION + "+" + WINDOW_Y_POSITION)
+
         self.resizable(width=False, height=False)
         self.iconbitmap(default=ICON)
 
