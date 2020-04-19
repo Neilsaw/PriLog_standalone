@@ -1357,10 +1357,24 @@ class Frame(tk.Tk):
         self.clear_focus(self)
         self.clear_setting(self)
 
+    def app_thread_end(self):
+        global app_thread
+
+        if app_thread:
+            app.set_analyze_status_stop()
+            app.set_movie_status_stop()
+            app_thread.join()
+
+
+def on_closing():
+    # 強制終了時安全に停止させる
+    save_config()
+    f.app_thread_end()
+    f.destroy()
+
 
 if __name__ == "__main__":
     load_config()
     f = Frame()
+    f.protocol("WM_DELETE_WINDOW", on_closing)
     f.mainloop()
-    app_thread_init()
-    save_config()
