@@ -198,6 +198,7 @@ def set_movie_action(self, status, path, ftype, error):
         analyze_status = True
         app.set_analyze_status_do()
         app_thread = threading.Thread(target=app.analyze_movie, args=(path, ftype, self))
+        app_thread.setDaemon(True)
         app_thread.start()
     else:
         self.set_error_message(error)
@@ -1120,6 +1121,7 @@ class Frame(tk.Tk):
             app.set_image_format(IMAGE_FORMAT)
             app.set_length_limit(LENGTH_LIMIT)
             app_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
+            app_thread.setDaemon(True)
             app_thread.start()
 
     # ポップアップメッセージ用 (layer:top)
@@ -1357,20 +1359,11 @@ class Frame(tk.Tk):
         self.clear_focus(self)
         self.clear_setting(self)
 
-    def app_thread_end(self):
-        global app_thread
-
-        if app_thread:
-            app.set_analyze_status_stop()
-            app.set_movie_status_stop()
-            app_thread.join()
-
 
 def on_closing():
     # 強制終了時安全に停止させる
     save_config()
-    f.app_thread_end()
-    f.destroy()
+    f.quit()
 
 
 if __name__ == "__main__":
