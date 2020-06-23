@@ -10,7 +10,7 @@ import app
 import myconfig
 import bg_maker
 
-VERSION = "v0.1.0"
+VERSION = "v0.2.0"
 
 ICON = "./resource/image/icon.ico"
 
