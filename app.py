@@ -238,7 +238,7 @@ def search(youtube_id):
         if int(movie_length) > 600:
             return None, None, ERROR_TOO_LONG
 
-    stream = yt.streams.get_by_itag("22")
+    stream = yt.streams.get_by_itag(22)
     if stream is None:
         return None, None, ERROR_NOT_HD
 
