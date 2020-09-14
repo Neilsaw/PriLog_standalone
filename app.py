@@ -122,6 +122,7 @@ MOVIE_GET_STATUS = MOVIE_DO
 
 SAVE_IMAGE_FORMAT = ".png"
 MOVIE_LENGTH_LIMIT = "True"
+ENEMY_UB = "True"
 
 RESULT_FILE_DIR = None
 
@@ -277,7 +278,6 @@ def analyze_movie(movie_path, file_type, self):
     roi_init(video_type)
 
     n = 0.34  # n秒ごと*
-    ub_interval = 0
 
     time_min = "1"
     time_sec10 = "3"
@@ -303,7 +303,10 @@ def analyze_movie(movie_path, file_type, self):
     total_damage = False
 
     cap_interval = int(frame_rate * n)
-    skip_frame = 5 * cap_interval
+    past_time = 90
+    time_count = 0
+    find_time = "1:30"
+    enemy_ub = "――――敵UB――――"
 
     for i in range(frame_count):  # 動画の秒数を取得し、回す
         ret = video.grab()
@@ -327,7 +330,7 @@ def analyze_movie(movie_path, file_type, self):
             break
 
         if i % cap_interval is 0:
-            if ((i - ub_interval) > skip_frame) or (ub_interval == 0):
+            if time_count >= 0:
                 ret, original_frame = video.read()
 
                 if ret is False:
@@ -381,14 +384,27 @@ def analyze_movie(movie_path, file_type, self):
                     time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
 
                     # UB文字を判定
-                    ub_result = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
-                                                 ub_data, ub_data_value, characters_find, self)
+                    ub_result, find_id = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
+                                                          ub_data, ub_data_value, characters_find, self)
 
                     if ub_result is FOUND:
-                        ub_interval = i
                         # 検出時の画像をviewに渡す
                         send_capture_frame(original_frame, self)
                         save_txt(ub_data[-1], result_file_dir)
+
+                    past_time, find_time, time_count, enemy_result = count_up(time_min, time_sec10, time_sec1,
+                                                                              past_time,
+                                                                              find_time, ub_result, find_id,
+                                                                              time_count, cap_interval, frame_rate)
+                    if enemy_result is FOUND:
+                        menu_check = analyze_item_frame(work_frame, MENU_DATA, MENU_ROI)[0]
+
+                        if menu_check is True:
+                            tl = find_time + "\t" + enemy_ub
+                            ub_data.append(tl)
+                            view.set_ub_text(self, tl)
+                            send_capture_frame(original_frame, self)
+                            save_txt(ub_data[-1], result_file_dir)
 
                     # 総ダメージ検出処理
                     # スコア表示の有無を確認
@@ -410,6 +426,8 @@ def analyze_movie(movie_path, file_type, self):
 
                             # 検出状況を初期化
                             menu_check = False
+            else:
+                time_count += 1
 
     video.release()
 
@@ -443,12 +461,14 @@ def edit_frame(frame):
     return work_frame
 
 
-def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_data_value, characters_find, self):
+def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_data_value, characters_find,
+                     self):
     # ub文字位置を解析　5キャラ見つけている場合は探索対象を5キャラにする
     analyze_frame = frame[roi[1]:roi[3], roi[0]:roi[2]]
 
     characters_num = len(CHARACTERS)
     ub_result = NOT_FOUND
+    find_id = 0
     tmp_character = [False, 0]
     tmp_value = UB_THRESH
 
@@ -461,16 +481,18 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
             tmp_character = [CHARACTERS[j], j]
             tmp_value = max_val
             ub_result = FOUND
+            find_id = j
 
     if ub_result is FOUND:
         # UB データに対する処理
-        ub_data.append(time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
+        tl = time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0]
+        ub_data.append(tl)
         view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
         ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
         if tmp_character[1] not in characters_find:
             characters_find.append(tmp_character[1])
 
-    return ub_result
+    return ub_result, find_id
 
 
 def analyze_timer_frame(frame, roi, data_num, time_data):
@@ -618,6 +640,51 @@ def analyze_anna_icon_frame(frame, roi, characters_find):
             characters_find.append(CHARACTERS.index('アンナ'))
 
     return
+
+
+def count_up(time_min, time_sec10, time_sec1, past_time, find_time, ub_result, find_id, time_count, cap_interval, frame_rate):
+    """count time after ub
+
+
+    Args
+        time_min (string): minute
+        time_sec10 (string): 10sec
+        time_sec1 (string): 1sec
+        past_time (int): 0~90
+        find_time (string): m:ss
+        ub_result (string): FOUND / NOT_FOUND
+        find_id (int): find character id
+        time_count (int): count up after ub
+        interval (int): read frame interval
+
+
+    Returns
+        past_time (int): 0~90
+        find_time (string): m:ss
+        time_count (int): count up after ub
+        enemy_result (string): FOUND / NOT_FOUND
+
+    """
+    enemy_result = NOT_FOUND
+    now_time = int(time_min) * 60 + int(time_sec10) * 10 + int(time_sec1)
+
+    if past_time != now_time:
+        past_time = now_time
+        time_count = 0
+    else:
+        time_count += 1
+
+    if time_count > 7:
+        new_time = time_min + ":" + time_sec10 + time_sec1
+        if find_time != new_time:
+            find_time = new_time
+            if ENEMY_UB == "True":
+                enemy_result = FOUND
+
+    if ub_result is FOUND:
+        time_count = -1 * (frame_rate / 30) * int(cd.ub_time_table[find_id] / cap_interval)
+
+    return past_time, find_time, time_count, enemy_result
 
 
 # view用定義
@@ -833,6 +900,13 @@ def set_length_limit(length_limit):
     global MOVIE_LENGTH_LIMIT
 
     MOVIE_LENGTH_LIMIT = length_limit
+
+
+def set_enemy_ub(enemy_ub):
+    # 敵UB表示(あり or なし) を取得する
+    global ENEMY_UB
+
+    ENEMY_UB = enemy_ub
 
 
 def save_capture_frame(frame, path, name):

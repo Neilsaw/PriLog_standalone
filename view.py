@@ -10,7 +10,7 @@ import app
 import myconfig
 import bg_maker
 
-VERSION = "v0.4.0"
+VERSION = "v0.5.0"
 
 ICON = "./resource/image/icon.ico"
 
@@ -147,6 +147,7 @@ NUM_BUTTON_EXIT_2 = 30
 MOVIE_PATH = myconfig.MOVIE_PATH_DEFAULT
 IMAGE_FORMAT = myconfig.IMAGE_FORMAT_DEFAULT
 LENGTH_LIMIT = myconfig.LENGTH_LIMIT_DEFAULT
+ENEMY_UB = myconfig.ENEMY_UB_DEFAULT
 WINDOW_X_POSITION = myconfig.WINDOW_POSITION_X_DEFAULT
 WINDOW_Y_POSITION = myconfig.WINDOW_POSITION_Y_DEFAULT
 
@@ -156,10 +157,11 @@ def load_config():
     global MOVIE_PATH
     global IMAGE_FORMAT
     global LENGTH_LIMIT
+    global ENEMY_UB
     global WINDOW_X_POSITION
     global WINDOW_Y_POSITION
 
-    MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT, WINDOW_X_POSITION, WINDOW_Y_POSITION = myconfig.read_config()
+    MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT, ENEMY_UB, WINDOW_X_POSITION, WINDOW_Y_POSITION = myconfig.read_config()
 
 
 def save_config():
@@ -169,7 +171,7 @@ def save_config():
 
     WINDOW_X_POSITION = str(f.winfo_rootx())
     WINDOW_Y_POSITION = str(f.winfo_rooty())
-    myconfig.create_config(False, MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT, WINDOW_X_POSITION, WINDOW_Y_POSITION)
+    myconfig.create_config(False, MOVIE_PATH, IMAGE_FORMAT, LENGTH_LIMIT, ENEMY_UB, WINDOW_X_POSITION, WINDOW_Y_POSITION)
 
 
 def set_waiting_movie(self):
@@ -434,14 +436,36 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_false_main.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_false_push)
         self.setting_menu_bt_limit_false_main.place(x=-149, y=314)
 
-        # 設定画面閉じるボタンを設定 (layer:top+7)
+        # True / False 設定取得
+        if ENEMY_UB == "True":
+            enemy_true_index = NUM_BUTTON_LIMIT_TRUE_ON
+            enemy_false_index = NUM_BUTTON_LIMIT_FALSE_OFF
+        else:
+            enemy_true_index = NUM_BUTTON_LIMIT_TRUE_OFF
+            enemy_false_index = NUM_BUTTON_LIMIT_FALSE_ON
+
+        # 設定画面敵UB表示ありボタンを設定 (layer:top+7)
+        self.setting_menu_bt_enemy_true_main = tk.Label(self.main_frame, image=images[enemy_true_index], width=70, height=17, bd=0)
+        self.setting_menu_bt_enemy_true_main.bind("<Leave>", self.bt_setting_menu_enemy_true_nm)
+        self.setting_menu_bt_enemy_true_main.bind("<Enter>", self.bt_setting_menu_enemy_true_select)
+        self.setting_menu_bt_enemy_true_main.bind("<ButtonRelease-1>", self.bt_setting_menu_enemy_true_push)
+        self.setting_menu_bt_enemy_true_main.place(x=-246, y=389)
+
+        # 設定画面敵UB表示なしボタンを設定 (layer:top+8)
+        self.setting_menu_bt_enemy_false_main = tk.Label(self.main_frame, image=images[enemy_false_index], width=70, height=17, bd=0)
+        self.setting_menu_bt_enemy_false_main.bind("<Leave>", self.bt_setting_menu_enemy_false_nm)
+        self.setting_menu_bt_enemy_false_main.bind("<Enter>", self.bt_setting_menu_enemy_false_select)
+        self.setting_menu_bt_enemy_false_main.bind("<ButtonRelease-1>", self.bt_setting_menu_enemy_false_push)
+        self.setting_menu_bt_enemy_false_main.place(x=-149, y=389)
+
+        # 設定画面閉じるボタンを設定 (layer:top+9)
         self.setting_menu_bt_exit_main = tk.Label(self.main_frame, image=images[NUM_BUTTON_EXIT], width=63, height=25, bd=0)
         self.setting_menu_bt_exit_main.bind("<Leave>", self.bt_setting_menu_exit_nm)
         self.setting_menu_bt_exit_main.bind("<Enter>", self.bt_setting_menu_exit_select)
         self.setting_menu_bt_exit_main.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
         self.setting_menu_bt_exit_main.place(x=-165, y=502)
 
-        # 設定画面バージョン情報を設定 (layer:top+8)
+        # 設定画面バージョン情報を設定 (layer:top+10)
         self.setting_menu_version_main = tk.Label(self.main_frame, image="", width=6, height=1, fg="#E2E2E2",
                                              bg="#272727", bd=0, font=("メイリオ", 8), text=VERSION)
         self.setting_menu_version_main.place(x=-262, y=505)
@@ -588,14 +612,28 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_false_analyze.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_false_push)
         self.setting_menu_bt_limit_false_analyze.place(x=-149, y=314)
 
-        # 設定画面閉じるボタンを設定 (layer:top+7)
+        # 設定画面敵UB表示ありボタンを設定 (layer:top+7)
+        self.setting_menu_bt_enemy_true_analyze = tk.Label(self.analyze_frame, image=images[enemy_true_index], width=70, height=17, bd=0)
+        self.setting_menu_bt_enemy_true_analyze.bind("<Leave>", self.bt_setting_menu_enemy_true_nm)
+        self.setting_menu_bt_enemy_true_analyze.bind("<Enter>", self.bt_setting_menu_enemy_true_select)
+        self.setting_menu_bt_enemy_true_analyze.bind("<ButtonRelease-1>", self.bt_setting_menu_enemy_true_push)
+        self.setting_menu_bt_enemy_true_analyze.place(x=-246, y=389)
+
+        # 設定画面敵UB表示なしボタンを設定 (layer:top+8)
+        self.setting_menu_bt_enemy_false_analyze = tk.Label(self.analyze_frame, image=images[enemy_false_index], width=70, height=17, bd=0)
+        self.setting_menu_bt_enemy_false_analyze.bind("<Leave>", self.bt_setting_menu_enemy_false_nm)
+        self.setting_menu_bt_enemy_false_analyze.bind("<Enter>", self.bt_setting_menu_enemy_false_select)
+        self.setting_menu_bt_enemy_false_analyze.bind("<ButtonRelease-1>", self.bt_setting_menu_enemy_false_push)
+        self.setting_menu_bt_enemy_false_analyze.place(x=-149, y=389)
+
+        # 設定画面閉じるボタンを設定 (layer:top+9)
         self.setting_menu_bt_exit_analyze = tk.Label(self.analyze_frame, image=images[NUM_BUTTON_EXIT], width=63, height=25, bd=0)
         self.setting_menu_bt_exit_analyze.bind("<Leave>", self.bt_setting_menu_exit_nm)
         self.setting_menu_bt_exit_analyze.bind("<Enter>", self.bt_setting_menu_exit_select)
         self.setting_menu_bt_exit_analyze.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
         self.setting_menu_bt_exit_analyze.place(x=-165, y=502)
 
-        # 設定画面バージョン情報を設定 (layer:top+8)
+        # 設定画面バージョン情報を設定 (layer:top+10)
         self.setting_menu_version_analyze = tk.Label(self.analyze_frame, image="", width=6, height=1, fg="#E2E2E2",
                                              bg="#272727", bd=0, font=("メイリオ", 8), text=VERSION)
         self.setting_menu_version_analyze.place(x=-262, y=505)
@@ -744,14 +782,28 @@ class Frame(tk.Tk):
         self.setting_menu_bt_limit_false_result.bind("<ButtonRelease-1>", self.bt_setting_menu_limit_false_push)
         self.setting_menu_bt_limit_false_result.place(x=-149, y=314)
 
-        # 設定画面閉じるボタンを設定 (layer:top+7)
+        # 設定画面敵UB表示ありボタンを設定 (layer:top+7)
+        self.setting_menu_bt_enemy_true_result = tk.Label(self.result_frame, image=images[enemy_true_index], width=70, height=17, bd=0)
+        self.setting_menu_bt_enemy_true_result.bind("<Leave>", self.bt_setting_menu_enemy_true_nm)
+        self.setting_menu_bt_enemy_true_result.bind("<Enter>", self.bt_setting_menu_enemy_true_select)
+        self.setting_menu_bt_enemy_true_result.bind("<ButtonRelease-1>", self.bt_setting_menu_enemy_true_push)
+        self.setting_menu_bt_enemy_true_result.place(x=-246, y=389)
+
+        # 設定画面敵UB表示なしボタンを設定 (layer:top+8)
+        self.setting_menu_bt_enemy_false_result = tk.Label(self.result_frame, image=images[enemy_false_index], width=70, height=17, bd=0)
+        self.setting_menu_bt_enemy_false_result.bind("<Leave>", self.bt_setting_menu_enemy_false_nm)
+        self.setting_menu_bt_enemy_false_result.bind("<Enter>", self.bt_setting_menu_enemy_false_select)
+        self.setting_menu_bt_enemy_false_result.bind("<ButtonRelease-1>", self.bt_setting_menu_enemy_false_push)
+        self.setting_menu_bt_enemy_false_result.place(x=-149, y=389)
+
+        # 設定画面閉じるボタンを設定 (layer:top+9)
         self.setting_menu_bt_exit_result = tk.Label(self.result_frame, image=images[NUM_BUTTON_EXIT], width=63, height=25, bd=0)
         self.setting_menu_bt_exit_result.bind("<Leave>", self.bt_setting_menu_exit_nm)
         self.setting_menu_bt_exit_result.bind("<Enter>", self.bt_setting_menu_exit_select)
         self.setting_menu_bt_exit_result.bind("<ButtonRelease-1>", self.bt_setting_menu_exit_push)
         self.setting_menu_bt_exit_result.place(x=-165, y=502)
 
-        # 設定画面バージョン情報を設定 (layer:top+8)
+        # 設定画面バージョン情報を設定 (layer:top+10)
         self.setting_menu_version_result = tk.Label(self.result_frame, image="", width=6, height=1, fg="#E2E2E2",
                                              bg="#272727", bd=0, font=("メイリオ", 8), text=VERSION)
         self.setting_menu_version_result.place(x=-262, y=505)
@@ -827,6 +879,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_main.place(x=118, y=239)
         self.setting_menu_bt_limit_true_main.place(x=21, y=314)
         self.setting_menu_bt_limit_false_main.place(x=118, y=314)
+        self.setting_menu_bt_enemy_true_main.place(x=21, y=389)
+        self.setting_menu_bt_enemy_false_main.place(x=118, y=389)
         self.setting_menu_bt_exit_main.place(x=102, y=502)
         self.setting_menu_version_main.place(x=5, y=502)
 
@@ -838,6 +892,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_analyze.place(x=118, y=239)
         self.setting_menu_bt_limit_true_analyze.place(x=21, y=314)
         self.setting_menu_bt_limit_false_analyze.place(x=118, y=314)
+        self.setting_menu_bt_enemy_true_analyze.place(x=21, y=389)
+        self.setting_menu_bt_enemy_false_analyze.place(x=118, y=389)
         self.setting_menu_bt_exit_analyze.place(x=102, y=502)
         self.setting_menu_version_analyze.place(x=5, y=502)
 
@@ -849,6 +905,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_result.place(x=118, y=239)
         self.setting_menu_bt_limit_true_result.place(x=21, y=314)
         self.setting_menu_bt_limit_false_result.place(x=118, y=314)
+        self.setting_menu_bt_enemy_true_result.place(x=21, y=389)
+        self.setting_menu_bt_enemy_false_result.place(x=118, y=389)
         self.setting_menu_bt_exit_result.place(x=102, y=502)
         self.setting_menu_version_result.place(x=5, y=502)
 
@@ -863,6 +921,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_main.place(x=-149, y=239)
         self.setting_menu_bt_limit_true_main.place(x=-246, y=314)
         self.setting_menu_bt_limit_false_main.place(x=-149, y=314)
+        self.setting_menu_bt_enemy_true_main.place(x=-246, y=389)
+        self.setting_menu_bt_enemy_false_main.place(x=-149, y=389)
         self.setting_menu_bt_exit_main.place(x=-165, y=502)
         self.setting_menu_version_main.place(x=-262, y=505)
 
@@ -874,6 +934,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_analyze.place(x=-149, y=239)
         self.setting_menu_bt_limit_true_analyze.place(x=-246, y=314)
         self.setting_menu_bt_limit_false_analyze.place(x=-149, y=314)
+        self.setting_menu_bt_enemy_true_analyze.place(x=-246, y=389)
+        self.setting_menu_bt_enemy_false_analyze.place(x=-149, y=389)
         self.setting_menu_bt_exit_analyze.place(x=-165, y=502)
         self.setting_menu_version_analyze.place(x=-262, y=505)
 
@@ -885,6 +947,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_result.place(x=-149, y=239)
         self.setting_menu_bt_limit_true_result.place(x=-246, y=314)
         self.setting_menu_bt_limit_false_result.place(x=-149, y=314)
+        self.setting_menu_bt_enemy_true_result.place(x=-246, y=389)
+        self.setting_menu_bt_enemy_false_result.place(x=-149, y=389)
         self.setting_menu_bt_exit_result.place(x=-165, y=502)
         self.setting_menu_version_result.place(x=-262, y=505)
 
@@ -899,6 +963,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_main.place_forget()
         self.setting_menu_bt_limit_true_main.place_forget()
         self.setting_menu_bt_limit_false_main.place_forget()
+        self.setting_menu_bt_enemy_true_main.place_forget()
+        self.setting_menu_bt_enemy_false_main.place_forget()
         self.setting_menu_bt_exit_main.place_forget()
         self.setting_menu_version_main.place_forget()
 
@@ -910,6 +976,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_analyze.place_forget()
         self.setting_menu_bt_limit_true_analyze.place_forget()
         self.setting_menu_bt_limit_false_analyze.place_forget()
+        self.setting_menu_bt_enemy_true_analyze.place_forget()
+        self.setting_menu_bt_enemy_false_analyze.place_forget()
         self.setting_menu_bt_exit_analyze.place_forget()
         self.setting_menu_version_analyze.place_forget()
 
@@ -921,6 +989,8 @@ class Frame(tk.Tk):
         self.setting_menu_bt_jpg_result.place_forget()
         self.setting_menu_bt_limit_true_result.place_forget()
         self.setting_menu_bt_limit_false_result.place_forget()
+        self.setting_menu_bt_enemy_true_result.place_forget()
+        self.setting_menu_bt_enemy_false_result.place_forget()
         self.setting_menu_bt_exit_result.place_forget()
         self.setting_menu_version_result.place_forget()
 
@@ -1047,7 +1117,7 @@ class Frame(tk.Tk):
             self.setting_menu_bt_limit_false_result.configure(image=images[NUM_BUTTON_LIMIT_FALSE_OFF])
             save_config()
 
-    # 設定画面動画時間制限なしボタン用イベント (layer:top+5)
+    # 設定画面動画時間制限なしボタン用イベント (layer:top+6)
     def bt_setting_menu_limit_false_nm(self, event):
         self.setting_menu_bt_limit_false_main.configure(cursor="arrow")
         self.setting_menu_bt_limit_false_analyze.configure(cursor="arrow")
@@ -1071,7 +1141,55 @@ class Frame(tk.Tk):
             self.setting_menu_bt_limit_true_result.configure(image=images[NUM_BUTTON_LIMIT_TRUE_OFF])
             save_config()
 
-    # 設定画面閉じるボタン用イベント (layer:top+7)
+    # 設定画面敵UB表示ありボタン用イベント (layer:top+7)
+    def bt_setting_menu_enemy_true_nm(self, event):
+        self.setting_menu_bt_enemy_true_main.configure(cursor="arrow")
+        self.setting_menu_bt_enemy_true_analyze.configure(cursor="arrow")
+        self.setting_menu_bt_enemy_true_result.configure(cursor="arrow")
+
+    def bt_setting_menu_enemy_true_select(self, event):
+        self.setting_menu_bt_enemy_true_main.configure(cursor="hand2")
+        self.setting_menu_bt_enemy_true_analyze.configure(cursor="hand2")
+        self.setting_menu_bt_enemy_true_result.configure(cursor="hand2")
+
+    def bt_setting_menu_enemy_true_push(self, event):
+        global ENEMY_UB
+
+        if ENEMY_UB != "True":
+            ENEMY_UB = "True"
+            self.setting_menu_bt_enemy_true_main.configure(image=images[NUM_BUTTON_LIMIT_TRUE_ON])
+            self.setting_menu_bt_enemy_true_analyze.configure(image=images[NUM_BUTTON_LIMIT_TRUE_ON])
+            self.setting_menu_bt_enemy_true_result.configure(image=images[NUM_BUTTON_LIMIT_TRUE_ON])
+            self.setting_menu_bt_enemy_false_main.configure(image=images[NUM_BUTTON_LIMIT_FALSE_OFF])
+            self.setting_menu_bt_enemy_false_analyze.configure(image=images[NUM_BUTTON_LIMIT_FALSE_OFF])
+            self.setting_menu_bt_enemy_false_result.configure(image=images[NUM_BUTTON_LIMIT_FALSE_OFF])
+            save_config()
+
+    # 設定画面敵UB表示なしボタン用イベント (layer:top+8)
+    def bt_setting_menu_enemy_false_nm(self, event):
+        self.setting_menu_bt_enemy_false_main.configure(cursor="arrow")
+        self.setting_menu_bt_enemy_false_analyze.configure(cursor="arrow")
+        self.setting_menu_bt_enemy_false_result.configure(cursor="arrow")
+
+    def bt_setting_menu_enemy_false_select(self, event):
+        self.setting_menu_bt_enemy_false_main.configure(cursor="hand2")
+        self.setting_menu_bt_enemy_false_analyze.configure(cursor="hand2")
+        self.setting_menu_bt_enemy_false_result.configure(cursor="hand2")
+
+    def bt_setting_menu_enemy_false_push(self, event):
+        global ENEMY_UB
+
+        if ENEMY_UB != "False":
+            ENEMY_UB = "False"
+            self.setting_menu_bt_enemy_false_main.configure(image=images[NUM_BUTTON_LIMIT_FALSE_ON])
+            self.setting_menu_bt_enemy_false_analyze.configure(image=images[NUM_BUTTON_LIMIT_FALSE_ON])
+            self.setting_menu_bt_enemy_false_result.configure(image=images[NUM_BUTTON_LIMIT_FALSE_ON])
+            self.setting_menu_bt_enemy_true_main.configure(image=images[NUM_BUTTON_LIMIT_TRUE_OFF])
+            self.setting_menu_bt_enemy_true_analyze.configure(image=images[NUM_BUTTON_LIMIT_TRUE_OFF])
+            self.setting_menu_bt_enemy_true_result.configure(image=images[NUM_BUTTON_LIMIT_TRUE_OFF])
+            save_config()
+
+    # 設定画面閉じるボタン用イベント (layer:top+9)
     def bt_setting_menu_exit_nm(self, event):
         self.setting_menu_bt_exit_main.configure(image=images[NUM_BUTTON_EXIT], cursor="arrow")
         self.setting_menu_bt_exit_analyze.configure(image=images[NUM_BUTTON_EXIT], cursor="arrow")
@@ -1131,6 +1249,7 @@ class Frame(tk.Tk):
             app.set_movie_status_do()
             app.set_image_format(IMAGE_FORMAT)
             app.set_length_limit(LENGTH_LIMIT)
+            app.set_enemy_ub(ENEMY_UB)
             app_thread = threading.Thread(target=app.analyze_transition_check, args=(file_path, self))
             app_thread.setDaemon(True)
             app_thread.start()

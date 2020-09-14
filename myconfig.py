@@ -11,6 +11,8 @@ SECTION1_1 = "movie_path"
 SECTION2_SETTING = "setting"
 SECTION2_1 = "image_format"
 SECTION2_2 = "length_limit"
+SECTION2_3 = "enemy_ub"
+
 
 SECTION3_POSITION = "position"
 SECTION3_1 = "window_x_position"
@@ -21,21 +23,25 @@ IMAGE_FORMAT_DEFAULT = ".png"
 IMAGE_FORMAT_ANOTHER = ".jpg"
 LENGTH_LIMIT_DEFAULT = "True"
 LENGTH_LIMIT_ANOTHER = "False"
+ENEMY_UB_DEFAULT = "True"
+ENEMY_UB_ANOTHER = "False"
 WINDOW_POSITION_X_DEFAULT = "200"
 WINDOW_POSITION_Y_DEFAULT = "200"
 
 
-def create_config(init, path, image, limit, position_x, position_y):
+def create_config(init, path, image, limit, enemy, position_x, position_y):
     if init:
         movie_path = MOVIE_PATH_DEFAULT
         image_format = IMAGE_FORMAT_DEFAULT
         length_limit = LENGTH_LIMIT_DEFAULT
+        enemy_ub = ENEMY_UB_DEFAULT
         window_x_position = WINDOW_POSITION_X_DEFAULT
         window_y_position = WINDOW_POSITION_Y_DEFAULT
     else:
         movie_path = path
         image_format = image
         length_limit = limit
+        enemy_ub = enemy
         window_x_position = position_x
         window_y_position = position_y
 
@@ -48,6 +54,7 @@ def create_config(init, path, image, limit, position_x, position_y):
     config.add_section(section2)
     config.set(section2, SECTION2_1, image_format)
     config.set(section2, SECTION2_2, length_limit)
+    config.set(section2, SECTION2_3, enemy_ub)
 
     section3 = SECTION3_POSITION
     config.add_section(section3)
@@ -62,12 +69,13 @@ def read_config():
     movie_path = MOVIE_PATH_DEFAULT
     image_format = IMAGE_FORMAT_DEFAULT
     length_limit = LENGTH_LIMIT_DEFAULT
+    enemy_ub = ENEMY_UB_DEFAULT
     window_x_position = WINDOW_POSITION_X_DEFAULT
     window_y_position = WINDOW_POSITION_X_DEFAULT
 
     if not os.path.exists(CONFIG_FILE):
         # コンフィグファイルが存在しない場合は初期化
-        create_config(True, None, None, None, None, None)
+        create_config(True, None, None, None, None, None, None)
     else:
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
@@ -86,6 +94,10 @@ def read_config():
         if tmp_length_limit == LENGTH_LIMIT_ANOTHER:
             length_limit = LENGTH_LIMIT_ANOTHER
 
+        tmp_enemy_ub = config.get(section2, SECTION2_3)
+        if tmp_enemy_ub == ENEMY_UB_ANOTHER:
+            enemy_ub = ENEMY_UB_ANOTHER
+
         section3 = SECTION3_POSITION
         tmp_window_x_position = config.get(section3, SECTION3_1)
         tmp_window_y_position = config.get(section3, SECTION3_2)
@@ -93,6 +105,6 @@ def read_config():
             window_x_position = tmp_window_x_position
             window_y_position = tmp_window_y_position
 
-        create_config(False, movie_path, image_format, length_limit, window_x_position, window_y_position)
+        create_config(False, movie_path, image_format, length_limit, enemy_ub, window_x_position, window_y_position)
 
-    return movie_path, image_format, length_limit, window_x_position, window_y_position
+    return movie_path, image_format, length_limit, enemy_ub, window_x_position, window_y_position
