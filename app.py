@@ -36,6 +36,9 @@ DETAIL_REPORT_DATA = []
 # 王冠テンプレート
 CROWN_DATA = []
 
+# SPEED icon template
+SPEED_DATA = []
+
 # キャラクター名一覧
 CHARACTERS = cd.characters_name
 
@@ -72,9 +75,11 @@ DAMAGE_DATA_ROI = (0, 0, 0, 0)
 CHARACTER_ICON_ROI = (0, 0, 0, 0)
 DETAIL_REPORT_ROI = (0, 0, 0, 0)
 CROWN_DATA_ROI = (0, 0, 0, 0)
+SPEED_ICON_ROI = (0, 0, 0, 0)
 MENU_LOC = (0, 0)
 
 FRAME_THRESH = 200
+SPEED_ICON_THRESH = 240
 
 FRAME_COLS = 1280
 FRAME_ROWS = 720
@@ -90,6 +95,7 @@ TIMER_THRESH = 0.6
 ITEM_THRESH = 0.6
 DAMAGE_THRESH = 0.65
 ICON_THRESH = 0.6
+SPEED_THRESH = 0.4
 
 FOUND = 1
 NOT_FOUND = 0
@@ -117,12 +123,14 @@ ANALYZE_END = 3
 MOVIE_DO = 0
 MOVIE_STOP = 1
 
+ENEMY_UB = "――――敵UB――――"
+
 ANALYZE_STATUS = ANALYZE_DO
 MOVIE_GET_STATUS = MOVIE_DO
 
 SAVE_IMAGE_FORMAT = ".png"
 MOVIE_LENGTH_LIMIT = "True"
-ENEMY_UB = "True"
+ENEMY_UB_VIEW = "True"
 
 RESULT_FILE_DIR = None
 
@@ -167,6 +175,7 @@ def model_init(video_type):
     global ICON_DATA                # アンナアイコンテンプレート
     global DETAIL_REPORT_DATA       # ダメージレポートテンプレート
     global CROWN_DATA               # 王冠テンプレート
+    global SPEED_DATA  # SPEED icon template
 
     if video_type is RESOLUTION_16_9:
         CHARACTERS_DATA = np.load("./resource/model/16_9/UB_name_16_9.npy")
@@ -177,6 +186,7 @@ def model_init(video_type):
         ICON_DATA = np.load("./resource/model/16_9/icon_data_16_9.npy")
         DETAIL_REPORT_DATA = np.load("./resource/model/16_9/detail_report_16_9.npy")
         CROWN_DATA = np.load("./resource/model/16_9/crown_16_9.npy")
+        SPEED_DATA = np.load("./resource/model/16_9/speed_data_16_9.npy")
 
     return
 
@@ -193,9 +203,11 @@ def roi_init(video_type):
     global CHARACTER_ICON_ROI    # アイコン　解析位置
     global DETAIL_REPORT_ROI     # ダメージレポート　解析位置
     global CROWN_DATA_ROI        # 王冠　解析位置
+    global SPEED_ICON_ROI  # speed icon analyze roi
 
     global MENU_LOC              # MENU　ボタン　正位置
     global FRAME_THRESH          # 解析用下限値
+    global SPEED_ICON_THRESH  # frame color thresh value
     global FRAME_COLS            # 横解像度
     global FRAME_ROWS            # 縦解像度
 
@@ -210,8 +222,10 @@ def roi_init(video_type):
         CHARACTER_ICON_ROI = (234, 506, 1046, 668)
         DETAIL_REPORT_ROI = (519, 33, 759, 79)
         CROWN_DATA_ROI = (431, 152, 470, 182)
+        SPEED_ICON_ROI = (1180, 616, 1271, 707)
         MENU_LOC = (63, 23)
         FRAME_THRESH = 200
+        SPEED_ICON_THRESH = 240
         FRAME_COLS = 1280
         FRAME_ROWS = 720
 
@@ -293,6 +307,7 @@ def analyze_movie(movie_path, file_type, self):
     damage_data_roi = DAMAGE_DATA_ROI
     detail_report_roi = DETAIL_REPORT_ROI
     crown_data_roi = CROWN_DATA_ROI
+    speed_roi = SPEED_ICON_ROI
 
     ub_data = []
     ub_data_value = []
@@ -305,8 +320,8 @@ def analyze_movie(movie_path, file_type, self):
     cap_interval = int(frame_rate * n)
     past_time = 90
     time_count = 0
-    find_time = "1:30"
-    enemy_ub = "――――敵UB――――"
+    find_id = -1
+    find_count = 0
 
     for i in range(frame_count):  # 動画の秒数を取得し、回す
         ret = video.grab()
@@ -330,104 +345,120 @@ def analyze_movie(movie_path, file_type, self):
             break
 
         if i % cap_interval is 0:
-            if time_count >= 0:
-                ret, original_frame = video.read()
+            ret, original_frame = video.read()
 
-                if ret is False:
-                    break
-                work_frame = edit_frame(original_frame)
+            if ret is False:
+                break
 
-                if menu_check is False:
-                    menu_check, menu_loc = analyze_item_frame(work_frame, MENU_DATA, MENU_ROI)
-                    if menu_check is True:
-                        loc_diff = np.array(MENU_LOC) - np.array(menu_loc)
-                        roi_diff = (loc_diff[0], loc_diff[1], loc_diff[0], loc_diff[1])
-                        min_roi = np.array(MIN_ROI) - np.array(roi_diff)
-                        tensec_roi = np.array(TEN_SEC_ROI) - np.array(roi_diff)
-                        onesec_roi = np.array(ONE_SEC_ROI) - np.array(roi_diff)
-                        ub_roi = np.array(UB_ROI) - np.array(roi_diff)
-                        score_roi = np.array(SCORE_ROI) - np.array(roi_diff)
-                        damage_data_roi = np.array(DAMAGE_DATA_ROI) - np.array(roi_diff)
-                        detail_report_roi = np.array(DETAIL_REPORT_ROI) - np.array(roi_diff)
-                        crown_data_roi = np.array(CROWN_DATA_ROI) - np.array(roi_diff)
+            work_frame = edit_frame(original_frame)
 
-                        analyze_anna_icon_frame(work_frame, CHARACTER_ICON_ROI, characters_find)
+            if menu_check is False:
+                menu_check, menu_loc = analyze_item_frame(work_frame, MENU_DATA, MENU_ROI)
+                if menu_check is True:
+                    loc_diff = np.array(MENU_LOC) - np.array(menu_loc)
+                    roi_diff = (loc_diff[0], loc_diff[1], loc_diff[0], loc_diff[1])
+                    min_roi = np.array(MIN_ROI) - np.array(roi_diff)
+                    tensec_roi = np.array(TEN_SEC_ROI) - np.array(roi_diff)
+                    onesec_roi = np.array(ONE_SEC_ROI) - np.array(roi_diff)
+                    ub_roi = np.array(UB_ROI) - np.array(roi_diff)
+                    score_roi = np.array(SCORE_ROI) - np.array(roi_diff)
+                    damage_data_roi = np.array(DAMAGE_DATA_ROI) - np.array(roi_diff)
+                    detail_report_roi = np.array(DETAIL_REPORT_ROI) - np.array(roi_diff)
+                    crown_data_roi = np.array(CROWN_DATA_ROI) - np.array(roi_diff)
+                    speed_roi = np.array(SPEED_ICON_ROI) - np.array(roi_diff)
 
-                        # 検出状況を初期化
-                        tmp_damage = []
-                        total_damage = False
+                    analyze_anna_icon_frame(work_frame, CHARACTER_ICON_ROI, characters_find)
 
-                    elif total_damage is not False:
-                        # ダメージレポート表示中
-                        # 王冠の有無を確認
-                        ret = analyze_item_frame(work_frame, CROWN_DATA, crown_data_roi)[0]
+                    # 検出状況を初期化
+                    tmp_damage = []
+                    total_damage = False
+                    past_time = 90
+                    time_count = 0
+                    find_id = -1
+                    find_count = 0
+
+                elif total_damage is not False:
+                    # ダメージレポート表示中
+                    # 王冠の有無を確認
+                    ret = analyze_item_frame(work_frame, CROWN_DATA, crown_data_roi)[0]
+
+                    if ret is True:
+                        # ダメージレポートの有無を確認
+                        ret = analyze_item_frame(work_frame, DETAIL_REPORT_DATA, detail_report_roi)[0]
 
                         if ret is True:
-                            # ダメージレポートの有無を確認
-                            ret = analyze_item_frame(work_frame, DETAIL_REPORT_DATA, detail_report_roi)[0]
+                            # ダメージレポートが開かれている場合
+                            # 検出時の画像をviewに渡す
+                            send_capture_frame(original_frame, self)
+                            save_capture_frame(original_frame, result_file_dir, "damage_report")
 
-                            if ret is True:
-                                # ダメージレポートが開かれている場合
-                                # 検出時の画像をviewに渡す
-                                send_capture_frame(original_frame, self)
-                                save_capture_frame(original_frame, result_file_dir, "damage_report")
+                            # 検出状況を初期化
+                            tmp_damage = []
+                            total_damage = False
+                            past_time = 90
+                            time_count = 0
+                            find_id = -1
+                            find_count = 0
 
-                                # 検出状況を初期化
-                                tmp_damage = []
-                                total_damage = False
+            else:
+                # UB 検出処理
+                # 時間を判定
+                time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
+                time_sec10 = analyze_timer_frame(work_frame, tensec_roi, 6, time_sec10)
+                time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
 
+                find_time = time_min + ":" + time_sec10 + time_sec1
+                now_time, is_same_time = time_check(time_min, time_sec10, time_sec1, past_time)
+
+                is_normal_speed = analyze_speed(original_frame, speed_roi)
+
+                if is_same_time:
+                    #  count up if normal speed, neither, reset count
+                    if is_normal_speed:
+                        time_count += 1
+                    else:
+                        time_count = 0
                 else:
-                    # UB 検出処理
-                    # 時間を判定
-                    time_min = analyze_timer_frame(work_frame, min_roi, 2, time_min)
-                    time_sec10 = analyze_timer_frame(work_frame, tensec_roi, 6, time_sec10)
-                    time_sec1 = analyze_timer_frame(work_frame, onesec_roi, 10, time_sec1)
+                    time_count = 0
+                    past_time = now_time
 
-                    # UB文字を判定
-                    ub_result, find_id = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10, time_sec1,
-                                                          ub_data, ub_data_value, characters_find, self)
+                if time_count >= 0:
+                    # check friendly ub
+                    ub_result, find_id, find_count = analyze_ub_frame(work_frame, ub_roi, time_min, time_sec10,
+                                                                      time_sec1,
+                                                                      ub_data, ub_data_value,
+                                                                      characters_find, find_id, find_count, self)
 
                     if ub_result is FOUND:
                         # 検出時の画像をviewに渡す
                         send_capture_frame(original_frame, self)
                         save_txt(ub_data[-1], result_file_dir)
+                        time_count = update_count(frame_rate, find_id, cap_interval)
 
-                    past_time, find_time, time_count, enemy_result = count_up(time_min, time_sec10, time_sec1,
-                                                                              past_time,
-                                                                              find_time, ub_result, find_id,
-                                                                              time_count, cap_interval, frame_rate)
-                    if enemy_result is FOUND:
-                        menu_check = analyze_item_frame(work_frame, MENU_DATA, MENU_ROI)[0]
+                    elif ENEMY_UB_VIEW == "True" and is_normal_speed:
+                        # check enemy ub
+                        analyze_enemy_ub(time_count, work_frame, find_time, ub_data, original_frame, result_file_dir, self)
 
-                        if menu_check is True:
-                            tl = find_time + "\t" + enemy_ub
-                            ub_data.append(tl)
-                            view.set_ub_text(self, tl)
-                            send_capture_frame(original_frame, self)
-                            save_txt(ub_data[-1], result_file_dir)
+                # 総ダメージ検出処理
+                # スコア表示の有無を確認
+                ret = analyze_item_frame(work_frame, SCORE_DATA, score_roi)[0]
 
-                    # 総ダメージ検出処理
-                    # スコア表示の有無を確認
-                    ret = analyze_item_frame(work_frame, SCORE_DATA, score_roi)[0]
+                if ret is True:
+                    # 総ダメージ解析
+                    ret = analyze_damage_frame(original_frame, damage_data_roi, tmp_damage)
 
                     if ret is True:
-                        # 総ダメージ解析
-                        ret = analyze_damage_frame(original_frame, damage_data_roi, tmp_damage)
+                        # 総ダメージ表示が存在の場合
+                        total_damage = "総ダメージ\n" + ''.join(tmp_damage)
+                        input_txt_damage = "\n\n" + total_damage + "\n"
+                        save_txt(input_txt_damage, result_file_dir)
+                        view.set_ub_text(self, input_txt_damage)
+                        # 検出時の画像をviewに渡す
+                        send_capture_frame(original_frame, self)
+                        save_capture_frame(original_frame, result_file_dir, "total_damage")
 
-                        if ret is True:
-                            # 総ダメージ表示が存在の場合
-                            total_damage = "総ダメージ\n" + ''.join(tmp_damage)
-                            input_txt_damage = "\n\n" + total_damage + "\n"
-                            save_txt(input_txt_damage, result_file_dir)
-                            view.set_ub_text(self, input_txt_damage)
-                            # 検出時の画像をviewに渡す
-                            send_capture_frame(original_frame, self)
-                            save_capture_frame(original_frame, result_file_dir, "total_damage")
-
-                            # 検出状況を初期化
-                            menu_check = False
-            else:
-                time_count += 1
+                        # 検出状況を初期化
+                        menu_check = False
 
     video.release()
 
@@ -461,14 +492,15 @@ def edit_frame(frame):
     return work_frame
 
 
-def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_data_value, characters_find,
-                     self):
+def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_data_value,
+                     characters_find, past_id, past_count, self):
     # ub文字位置を解析　5キャラ見つけている場合は探索対象を5キャラにする
     analyze_frame = frame[roi[1]:roi[3], roi[0]:roi[2]]
 
     characters_num = len(CHARACTERS)
     ub_result = NOT_FOUND
-    find_id = 0
+    find_id = -1
+    find_count = 0
     tmp_character = [False, 0]
     tmp_value = UB_THRESH
 
@@ -486,13 +518,25 @@ def analyze_ub_frame(frame, roi, time_min, time_10sec, time_sec, ub_data, ub_dat
     if ub_result is FOUND:
         # UB データに対する処理
         tl = time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0]
+        if len(ub_data) != 0 and ub_data[-1] == tl:
+            # same time, same ub ignore
+            find_count = past_count + 1
+            return NOT_FOUND, find_id, find_count
+
+        if find_id == past_id and past_count < 5:
+            # in 50f time, same ub ignore
+            find_count = past_count + 1
+            return NOT_FOUND, find_id, find_count
+
         ub_data.append(tl)
         view.set_ub_text(self, time_min + ":" + time_10sec + time_sec + "\t" + tmp_character[0])
         ub_data_value.extend([[int(int(time_min) * 60 + int(time_10sec) * 10 + int(time_sec)), tmp_character[1]]])
         if tmp_character[1] not in characters_find:
             characters_find.append(tmp_character[1])
 
-    return ub_result, find_id
+        return FOUND, find_id, find_count
+
+    return NOT_FOUND, find_id, find_count
 
 
 def analyze_timer_frame(frame, roi, data_num, time_data):
@@ -642,49 +686,95 @@ def analyze_anna_icon_frame(frame, roi, characters_find):
     return
 
 
-def count_up(time_min, time_sec10, time_sec1, past_time, find_time, ub_result, find_id, time_count, cap_interval, frame_rate):
-    """count time after ub
+def time_check(time_min, time_sec10, time_sec1, past_time):
+    now_time = int(time_min) * 60 + int(time_sec10) * 10 + int(time_sec1)
+    if past_time != now_time:
+        return now_time, False
+    else:
+        return now_time, True
+
+
+def update_count(frame_rate, find_id, cap_interval):
+    """update count after friendly ub
 
 
     Args
-        time_min (string): minute
-        time_sec10 (string): 10sec
-        time_sec1 (string): 1sec
-        past_time (int): 0~90
-        find_time (string): m:ss
-        ub_result (string): FOUND / NOT_FOUND
+        frame_rate (int): movie fps
         find_id (int): find character id
-        time_count (int): count up after ub
-        interval (int): read frame interval
+        cap_interval (int): read frame interval
 
 
     Returns
-        past_time (int): 0~90
-        find_time (string): m:ss
-        time_count (int): count up after ub
-        enemy_result (string): FOUND / NOT_FOUND
+        time_count (int): ub interval
 
     """
-    enemy_result = NOT_FOUND
-    now_time = int(time_min) * 60 + int(time_sec10) * 10 + int(time_sec1)
+    return -1 * (frame_rate / 30) * int(cd.ub_time_table[find_id] / cap_interval)
 
-    if past_time != now_time:
-        past_time = now_time
-        time_count = 0
+
+def check_enemy_ub(time_count):
+    """check enemy ub
+
+
+    Args
+        time_count (int): count up after ub
+
+
+    Returns
+        is_enemy_ub (boolean): enemy ub existence
+
+    """
+    if time_count > 9:
+        return True
     else:
-        time_count += 1
+        return False
 
-    if time_count > 7:
-        new_time = time_min + ":" + time_sec10 + time_sec1
-        if find_time != new_time:
-            find_time = new_time
-            if ENEMY_UB == "True":
-                enemy_result = FOUND
 
-    if ub_result is FOUND:
-        time_count = -1 * (frame_rate / 30) * int(cd.ub_time_table[find_id] / cap_interval)
+def analyze_enemy_ub(time_count, work_frame, find_time, ub_data, original_frame, result_file_dir, self):
+    # check enemy ub
+    is_enemy_ub = check_enemy_ub(time_count)
+    if is_enemy_ub:
+        menu_check = analyze_item_frame(work_frame, MENU_DATA, MENU_ROI)[0]
+        if menu_check:
+            tl = find_time + "\t" + ENEMY_UB
+            if len(ub_data) != 0 and ub_data[-1] != tl:
+                # same time, same ub ignore
+                ub_data.append(tl)
+                view.set_ub_text(self, tl)
+                send_capture_frame(original_frame, self)
+                save_txt(ub_data[-1], result_file_dir)
 
-    return past_time, find_time, time_count, enemy_result
+
+def analyze_speed(frame, roi):
+    """analyze speed
+
+    check speed icon for get speed
+
+    Args
+        frame (ndarray): original frame from movie
+        roi (list): search roi
+
+    Returns
+        ret (boolean): find or not find speed up (x2 / x4) icon inactive
+
+
+    """
+    analyze_frame = cv2.resize(frame, dsize=(FRAME_COLS, FRAME_ROWS))
+    analyze_frame = analyze_frame[roi[1]:roi[3], roi[0]:roi[2]]
+
+    analyze_frame = cv2.cvtColor(analyze_frame, cv2.COLOR_RGB2GRAY)
+    analyze_frame = cv2.threshold(analyze_frame, SPEED_ICON_THRESH, 255, cv2.THRESH_BINARY)[1]
+    analyze_frame = cv2.bitwise_not(analyze_frame)
+
+    speed_num = len(SPEED_DATA)
+
+    for j in range(speed_num):
+        result_temp = cv2.matchTemplate(analyze_frame, SPEED_DATA[j], cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result_temp)
+        if max_val > SPEED_THRESH:
+            # find speed up (x2 / x4) icon active
+            return False
+
+    return True
 
 
 # view用定義
@@ -904,9 +994,9 @@ def set_length_limit(length_limit):
 
 def set_enemy_ub(enemy_ub):
     # 敵UB表示(あり or なし) を取得する
-    global ENEMY_UB
+    global ENEMY_UB_VIEW
 
-    ENEMY_UB = enemy_ub
+    ENEMY_UB_VIEW = enemy_ub
 
 
 def save_capture_frame(frame, path, name):
