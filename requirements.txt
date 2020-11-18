@@ -15,5 +15,4 @@ pywin32==227
 pywin32-ctypes==0.2.0
 six==1.14.0
 typing-extensions==3.7.4.2
-
--e git+https://github.com/nficano/pytube.git#egg=pytube-9.7.2
+pytube==9.7.2
