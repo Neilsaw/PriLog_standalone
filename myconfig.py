@@ -2,6 +2,11 @@
 import os
 import sys
 import configparser
+import json
+import characters as cd
+
+CHARACTERS = cd.characters_name
+CHARACTERS_NAME_PATH = "./resource/character.json"
 
 CONFIG_FILE = "config.ini"
 
@@ -27,6 +32,25 @@ ENEMY_UB_DEFAULT = "True"
 ENEMY_UB_ANOTHER = "False"
 WINDOW_POSITION_X_DEFAULT = "200"
 WINDOW_POSITION_Y_DEFAULT = "200"
+
+
+def create_character_json():
+    dictionary = {}
+    for name in CHARACTERS:
+        dictionary[name] = name
+
+    with open(CHARACTERS_NAME_PATH, "w") as f:
+        json.dump(dictionary, f, ensure_ascii=False, indent=4)
+
+
+def load_character_json():
+    if not os.path.exists(CHARACTERS_NAME_PATH):
+        return False
+
+    with open(CHARACTERS_NAME_PATH, "r") as f:
+        characters = json.load(f)
+
+    return characters
 
 
 def create_config(init, path, image, limit, enemy, position_x, position_y):

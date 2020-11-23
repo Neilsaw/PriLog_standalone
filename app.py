@@ -8,6 +8,7 @@ import time as tm
 import datetime
 import cv2
 import itertools
+import myconfig
 import characters as cd
 import after_caluculation as ac
 import view
@@ -141,6 +142,22 @@ if not os.path.exists(stream_dir):
 result_dir = "result/"
 if not os.path.exists(result_dir):
     os.mkdir(result_dir)
+
+
+def load_name():
+    # json からキャラクター名読み込み
+    global CHARACTERS
+
+    json = myconfig.load_character_json()
+
+    if not json:
+        myconfig.create_character_json()
+        return
+
+    count = len(CHARACTERS)
+
+    for i in range(count):
+        CHARACTERS[i] = json[CHARACTERS[i]]
 
 
 def clear_path(path):
@@ -288,6 +305,7 @@ def analyze_movie(movie_path, file_type, self):
     frame_count = int(video.get(7))  # フレーム数を取得
     frame_rate = int(video.get(5))  # フレームレート(1フレームの時間単位はミリ秒)の取得
 
+    load_name()
     model_init(video_type)
     roi_init(video_type)
 
